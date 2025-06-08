@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { FileDiff, DiffLine } from '@/domain/entities/FileDiff';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
@@ -69,15 +70,20 @@ function InlineDiffView({ diff }: { diff: FileDiff }) {
               <div
                 key={lineIndex}
                 className={cn(
-                  "px-4 py-0.5",
+                  "flex",
                   line.type === 'add' && "bg-green-500/20 text-green-700 dark:text-green-400",
                   line.type === 'delete' && "bg-red-500/20 text-red-700 dark:text-red-400"
                 )}
               >
-                <span className="select-none pr-2 text-muted-foreground">
+                <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
+                  {line.oldLineNumber || line.newLineNumber || ''}
+                </span>
+                <span className="w-4 select-none px-2 py-0.5 text-muted-foreground">
                   {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
                 </span>
-                <span>{line.content}</span>
+                <span className="flex-1 px-2 py-0.5">
+                  {line.content}
+                </span>
               </div>
             ))}
           </div>
@@ -88,6 +94,24 @@ function InlineDiffView({ diff }: { diff: FileDiff }) {
 }
 
 function SideBySideDiffView({ diff }: { diff: FileDiff }) {
+  const leftScrollRef = useRef<HTMLDivElement>(null);
+  const rightScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (source: 'left' | 'right') => {
+    return (event: React.UIEvent<HTMLDivElement>) => {
+      const scrollTop = event.currentTarget.scrollTop;
+      const scrollLeft = event.currentTarget.scrollLeft;
+      
+      if (source === 'left' && rightScrollRef.current) {
+        rightScrollRef.current.scrollTop = scrollTop;
+        rightScrollRef.current.scrollLeft = scrollLeft;
+      } else if (source === 'right' && leftScrollRef.current) {
+        leftScrollRef.current.scrollTop = scrollTop;
+        leftScrollRef.current.scrollLeft = scrollLeft;
+      }
+    };
+  };
+
   const renderLine = (line: DiffLine | undefined, lineNumber: number | undefined, side: 'old' | 'new') => {
     if (!line) {
       return (
@@ -162,7 +186,11 @@ function SideBySideDiffView({ diff }: { diff: FileDiff }) {
         <div className="bg-muted px-4 py-2 font-semibold">
           {diff.previousPath || diff.path}
         </div>
-        <ScrollArea className="h-[calc(100%-40px)]">
+        <div 
+          ref={leftScrollRef}
+          className="h-[calc(100%-40px)] overflow-auto"
+          onScroll={handleScroll('left')}
+        >
           <div>
             {processedLines.map((linePair, index) => (
               <div key={index}>
@@ -170,13 +198,17 @@ function SideBySideDiffView({ diff }: { diff: FileDiff }) {
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </div>
       <div className="flex-1 overflow-hidden">
         <div className="bg-muted px-4 py-2 font-semibold">
           {diff.path}
         </div>
-        <ScrollArea className="h-[calc(100%-40px)]">
+        <div 
+          ref={rightScrollRef}
+          className="h-[calc(100%-40px)] overflow-auto"
+          onScroll={handleScroll('right')}
+        >
           <div>
             {processedLines.map((linePair, index) => (
               <div key={index}>
@@ -184,7 +216,7 @@ function SideBySideDiffView({ diff }: { diff: FileDiff }) {
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );

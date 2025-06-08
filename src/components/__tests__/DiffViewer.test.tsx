@@ -46,6 +46,10 @@ describe('DiffViewer', () => {
     expect(screen.getByText('line4')).toBeInTheDocument();
     
     expect(screen.getByText(/@@ -2,1 \+2,2 @@/)).toBeInTheDocument();
+    
+    // Check that line numbers are displayed
+    expect(screen.getAllByText('1')).toHaveLength(1);
+    expect(screen.getAllByText('2')).toHaveLength(2); // Line 2 appears twice (delete and add)
   });
 
   it('should apply correct styling for added lines in inline view', () => {
