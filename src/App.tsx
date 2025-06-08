@@ -157,13 +157,23 @@ function App() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-muted-foreground">From:</label>
               <Select value={fromCommit} onValueChange={setFromCommit}>
-                <SelectTrigger className="w-[300px]">
+                <SelectTrigger className="w-[400px]">
                   <SelectValue placeholder="Select base commit" />
                 </SelectTrigger>
                 <SelectContent>
                   {commits.map((commit) => (
                     <SelectItem key={commit.hash} value={commit.hash}>
-                      {commit.hash.substring(0, 7)} - {commit.message.substring(0, 50)}
+                      <div className="flex flex-col gap-1 py-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
+                          <span className="text-sm">{commit.message.substring(0, 60)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{commit.author}</span>
+                          <span>•</span>
+                          <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,13 +183,23 @@ function App() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-muted-foreground">To:</label>
               <Select value={toCommit} onValueChange={setToCommit}>
-                <SelectTrigger className="w-[300px]">
+                <SelectTrigger className="w-[400px]">
                   <SelectValue placeholder="Select target commit" />
                 </SelectTrigger>
                 <SelectContent>
                   {commits.map((commit) => (
                     <SelectItem key={commit.hash} value={commit.hash}>
-                      {commit.hash.substring(0, 7)} - {commit.message.substring(0, 50)}
+                      <div className="flex flex-col gap-1 py-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
+                          <span className="text-sm">{commit.message.substring(0, 60)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{commit.author}</span>
+                          <span>•</span>
+                          <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
