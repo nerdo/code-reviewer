@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Input } from './ui/input';
@@ -195,7 +195,7 @@ export function BranchCommitSelector({
                     <Calendar className="h-3 w-3 text-muted-foreground" />
                     <Select 
                       value={dateFilter} 
-                      onValueChange={(value: string) => onDateFilterChange(value as any)}
+                      onValueChange={(value: string) => onDateFilterChange(value as 'any' | 'today' | 'last7' | 'last30' | 'last90' | 'custom')}
                     >
                       <SelectTrigger className="w-[140px] h-8 text-xs">
                         <SelectValue />

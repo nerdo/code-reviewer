@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Button } from './ui/button';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { GitBranch, Tag, GitCommit } from 'lucide-react';
 import { Commit } from '@/domain/entities/Commit';

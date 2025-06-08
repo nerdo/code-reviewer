@@ -27,7 +27,7 @@ export function DiffViewer({ diff, viewMode, highlighterEnabled = false, linkHig
   }, [clearHighlightsRef]);
 
   // Helper to get linked line ID for side-by-side view
-  const getLinkedLineId = (lineId: string, processedLines?: Array<{ old: any; new: any }>): string | null => {
+  const getLinkedLineId = (lineId: string, processedLines?: Array<{ old: ProcessedLine; new: ProcessedLine }>): string | null => {
     if (!linkHighlights || viewMode !== 'side-by-side') return null;
     
     const parts = lineId.split('-');
@@ -118,15 +118,13 @@ interface HighlighterProps {
   setDragStart: (start: string | null) => void;
   linkHighlights: boolean;
   linkMode: 'line-number' | 'visual-position';
-  getLinkedLineId: (lineId: string, processedLines?: Array<any>) => string | null;
+  getLinkedLineId: (lineId: string, processedLines?: Array<{ old: ProcessedLine; new: ProcessedLine }>) => string | null;
 }
 
 function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHighlightedLines, hoveredLine, setHoveredLine, isDragging, setIsDragging, dragStart, setDragStart }: { diff: FileDiff } & HighlighterProps) {
   const { settings } = useSettings();
   const lines = diff.newContent.split('\n');
   const [dragIsRemoving, setDragIsRemoving] = useState(false);
-  const lineNumbersRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   // Helper function to get filename display text
   const getFilenameDisplay = (diff: FileDiff): string => {
@@ -590,7 +588,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
   }, [isDragging, setIsDragging, setDragStart, setDragIsRemoving]);
 
   // Helper to get smart highlight class for side-by-side diff
-  const getSideBySideHighlightClass = (lineId: string, index: number, allProcessedLines: Array<any>) => {
+  const getSideBySideHighlightClass = (lineId: string, index: number, allProcessedLines: Array<{ old: ProcessedLine; new: ProcessedLine }>) => {
     const isHighlighted = highlightedLines.has(lineId);
     if (!isHighlighted) return '';
     

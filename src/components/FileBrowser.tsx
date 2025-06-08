@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FileNode } from '@/domain/entities/FileNode';
 import { FileChangeType } from '@/domain/entities/FileChange';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Minus, Edit, MoveRight } from 'lucide-react';
@@ -27,7 +27,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
   };
 
   // Check if a directory has any changes in its subtree
-  const hasChangesInSubtree = (node: FileNode): boolean => {
+  const hasChangesInSubtree = useCallback((node: FileNode): boolean => {
     // If this node itself has changes, return true
     if (node.change) {
       return true;
@@ -44,7 +44,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
     }
     
     return false;
-  };
+  }, []);
 
   // Auto-expand directories that contain changes (only on initial load)
   useEffect(() => {
@@ -83,7 +83,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
       // Otherwise, merge the auto-expanded paths with existing manual expansions
       return new Set([...prev, ...pathsWithChanges]);
     });
-  }, [fileTree]);
+  }, [fileTree, hasChangesInSubtree]);
 
   const getChangeIcon = (changeType: FileChangeType) => {
     switch (changeType) {

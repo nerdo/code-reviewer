@@ -2,7 +2,6 @@
 
 import { spawn } from 'child_process';
 import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 
 const args = process.argv.slice(2);
@@ -74,7 +73,7 @@ for (let i = 0; i < args.length; i++) {
 // Check if we're in a git repository
 function checkGitRepo() {
   try {
-    const { execSync } = require('child_process');
+    const { execSync } = require('child_process'); // eslint-disable-line @typescript-eslint/no-var-requires
     execSync('git rev-parse --git-dir', { stdio: 'ignore' });
     return true;
   } catch (error) {
@@ -104,8 +103,8 @@ function openBrowser(url: string) {
                 process.platform === 'win32' ? 'start' : 'xdg-open';
   
   setTimeout(() => {
-    const { exec } = require('child_process');
-    exec(`${start} ${url}`, (error: any) => {
+    const { exec } = require('child_process'); // eslint-disable-line @typescript-eslint/no-var-requires
+    exec(`${start} ${url}`, (error: unknown) => {
       if (error) {
         console.log(`Open your browser and navigate to: ${url}`);
       }
