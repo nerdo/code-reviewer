@@ -222,11 +222,11 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
   };
 
   return (
-    <div className="h-full">
-      <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b">
+    <div className="h-full flex flex-col">
+      <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b shrink-0">
         No changes between commits
       </div>
-      <ScrollArea className="h-[calc(100%-40px)] w-full">
+      <ScrollArea className="flex-1 w-full">
         <div className="font-mono text-sm w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
           {lines.map((line, index) => {
             const lineId = `unchanged-${index + 1}`;
@@ -735,13 +735,13 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
 
   return (
     <div className="flex h-full font-mono text-sm">
-      <div className="flex-1 border-r overflow-hidden">
-        <div className="bg-muted px-4 py-2 font-semibold">
+      <div className="flex-1 border-r overflow-hidden flex flex-col">
+        <div className="bg-muted px-4 py-2 font-semibold shrink-0">
           {diff.previousPath || diff.path}
         </div>
         <div 
           ref={leftScrollRef}
-          className="h-[calc(100%-40px)] overflow-auto"
+          className="flex-1 overflow-auto"
           onScroll={handleScroll('left')}
         >
           <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
@@ -753,13 +753,13 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
-        <div className="bg-muted px-4 py-2 font-semibold">
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="bg-muted px-4 py-2 font-semibold shrink-0">
           {diff.path}
         </div>
         <div 
           ref={rightScrollRef}
-          className="h-[calc(100%-40px)] overflow-auto"
+          className="flex-1 overflow-auto"
           onScroll={handleScroll('right')}
         >
           <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>

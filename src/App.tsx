@@ -470,7 +470,7 @@ function App() {
           </div>
         </aside>
         
-        <main className="flex-1">
+        <main className="flex-1 overflow-hidden">
           {fileDiff ? (
             (() => {
               const hasNoChanges = fileDiff.hunks.length === 0 && fileDiff.oldContent === fileDiff.newContent;
@@ -511,62 +511,64 @@ function App() {
               }
               
               return (
-                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')}>
-                  <div className="flex items-center justify-between m-2">
-                    <TabsList>
-                      <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
-                      <TabsTrigger value="inline">Inline</TabsTrigger>
-                    </TabsList>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={highlighterEnabled ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setHighlighterEnabled(!highlighterEnabled)}
-                        className="flex items-center gap-2"
-                      >
-                        <Highlighter className="h-4 w-4" />
-                        Highlighter
-                      </Button>
-                      {highlighterEnabled && (
-                        <>
-                          {viewMode === 'side-by-side' && (() => {
-                            const linkContent = getLinkButtonContent();
-                            return (
-                              <Button
-                                variant={linkContent.variant}
-                                size="sm"
-                                onClick={cycleLinkMode}
-                                className="flex items-center gap-2"
-                              >
-                                <linkContent.icon className="h-4 w-4" />
-                                {linkContent.text}
-                              </Button>
-                            );
-                          })()}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => clearHighlightsRef.current?.()}
-                            className="flex items-center gap-2"
-                          >
-                            <Eraser className="h-4 w-4" />
-                            Clear
-                          </Button>
-                        </>
-                      )}
+                <div className="flex flex-col h-full">
+                  <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')} className="flex flex-col h-full">
+                    <div className="flex items-center justify-between m-2 shrink-0">
+                      <TabsList>
+                        <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
+                        <TabsTrigger value="inline">Inline</TabsTrigger>
+                      </TabsList>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant={highlighterEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setHighlighterEnabled(!highlighterEnabled)}
+                          className="flex items-center gap-2"
+                        >
+                          <Highlighter className="h-4 w-4" />
+                          Highlighter
+                        </Button>
+                        {highlighterEnabled && (
+                          <>
+                            {viewMode === 'side-by-side' && (() => {
+                              const linkContent = getLinkButtonContent();
+                              return (
+                                <Button
+                                  variant={linkContent.variant}
+                                  size="sm"
+                                  onClick={cycleLinkMode}
+                                  className="flex items-center gap-2"
+                                >
+                                  <linkContent.icon className="h-4 w-4" />
+                                  {linkContent.text}
+                                </Button>
+                              );
+                            })()}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => clearHighlightsRef.current?.()}
+                              className="flex items-center gap-2"
+                            >
+                              <Eraser className="h-4 w-4" />
+                              Clear
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <TabsContent value={viewMode} className="h-[calc(100%-64px)] m-0">
-                    <DiffViewer 
-                      diff={fileDiff} 
-                      viewMode={viewMode} 
-                      highlighterEnabled={highlighterEnabled}
-                      linkHighlights={linkHighlights}
-                      linkMode={linkMode}
-                      clearHighlightsRef={clearHighlightsRef}
-                    />
-                  </TabsContent>
-                </Tabs>
+                    <TabsContent value={viewMode} className="flex-1 m-0">
+                      <DiffViewer 
+                        diff={fileDiff} 
+                        viewMode={viewMode} 
+                        highlighterEnabled={highlighterEnabled}
+                        linkHighlights={linkHighlights}
+                        linkMode={linkMode}
+                        clearHighlightsRef={clearHighlightsRef}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </div>
               );
             })()
           ) : (
