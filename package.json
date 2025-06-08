@@ -4,7 +4,7 @@
   "description": "A web app for reviewing code changes between git commits",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "dev": "concurrently \"pnpm run server:dev\" \"pnpm run client:dev\"",
     "server:dev": "nodemon",
     "client:dev": "vite",
     "build": "tsc && vite build",
