@@ -11,9 +11,10 @@ export class GitRepositoryRepository implements IRepositoryRepository {
   async getRepository(repoPath: string): Promise<Repository> {
     const git = this.getGit(repoPath);
     
-    const [branches, currentBranch, remotes] = await Promise.all([
+    const [branches, currentBranch, tags, remotes] = await Promise.all([
       this.getBranches(repoPath),
       this.getCurrentBranch(repoPath),
+      this.getTags(repoPath),
       git.getRemotes()
     ]);
 
@@ -22,6 +23,7 @@ export class GitRepositoryRepository implements IRepositoryRepository {
       name: path.basename(repoPath),
       currentBranch,
       branches,
+      tags,
       remotes: remotes.map(r => r.name)
     };
   }
@@ -36,5 +38,11 @@ export class GitRepositoryRepository implements IRepositoryRepository {
     const git = this.getGit(repoPath);
     const branchSummary = await git.branchLocal();
     return branchSummary.current;
+  }
+
+  async getTags(repoPath: string): Promise<string[]> {
+    const git = this.getGit(repoPath);
+    const tags = await git.tags();
+    return tags.all;
   }
 }

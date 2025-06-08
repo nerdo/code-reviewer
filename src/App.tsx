@@ -3,6 +3,7 @@ import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
 import { CommitSelector } from './components/CommitSelector';
 import { CommitFilter } from './components/CommitFilter';
+import { ReferenceSelector } from './components/ReferenceSelector';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
@@ -23,6 +24,8 @@ function App() {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [fromCommit, setFromCommit] = useState<string>('');
   const [toCommit, setToCommit] = useState<string>('');
+  const [fromType, setFromType] = useState<'branch' | 'tag' | 'commit'>('commit');
+  const [toType, setToType] = useState<'branch' | 'tag' | 'commit'>('commit');
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [fileDiff, setFileDiff] = useState<FileDiff | null>(null);
@@ -296,18 +299,30 @@ function App() {
                   Branch: {repository.currentBranch}
                 </span>
               </div>
-              <CommitSelector 
+              <ReferenceSelector 
                 label="From"
+                branches={repository.branches}
+                tags={repository.tags || []}
                 commits={filteredCommits}
                 value={fromCommit}
-                onValueChange={setFromCommit}
+                onValueChange={(value, type) => {
+                  setFromCommit(value);
+                  setFromType(type);
+                }}
+                defaultType={fromType}
               />
               
-              <CommitSelector 
+              <ReferenceSelector 
                 label="To"
+                branches={repository.branches}
+                tags={repository.tags || []}
                 commits={filteredCommits}
                 value={toCommit}
-                onValueChange={setToCommit}
+                onValueChange={(value, type) => {
+                  setToCommit(value);
+                  setToType(type);
+                }}
+                defaultType={toType}
               />
               
               <div className="ml-auto flex items-center gap-2">

@@ -3,5 +3,6 @@ export interface Repository {
   name: string;
   currentBranch: string;
   branches: string[];
+  tags: string[];
   remotes: string[];
 }
