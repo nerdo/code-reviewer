@@ -34,16 +34,21 @@ describe('FileBrowser', () => {
 
     const srcDir = screen.getByText('src');
     
-    expect(screen.queryByText('index.ts')).not.toBeInTheDocument();
+    // The src directory should be auto-expanded because it contains changes
+    expect(screen.getByText('index.ts')).toBeInTheDocument();
+    expect(screen.getByText('new.ts')).toBeInTheDocument();
     
+    // Clicking should collapse it
+    fireEvent.click(srcDir);
+    
+    expect(screen.queryByText('index.ts')).not.toBeInTheDocument();
+    expect(screen.queryByText('new.ts')).not.toBeInTheDocument();
+    
+    // Clicking again should expand it
     fireEvent.click(srcDir);
     
     expect(screen.getByText('index.ts')).toBeInTheDocument();
     expect(screen.getByText('new.ts')).toBeInTheDocument();
-    
-    fireEvent.click(srcDir);
-    
-    expect(screen.queryByText('index.ts')).not.toBeInTheDocument();
   });
 
   it('should call onFileSelect when clicking a file', () => {
@@ -86,9 +91,8 @@ describe('FileBrowser', () => {
       />
     );
 
-    const srcDir = screen.getByText('src');
-    fireEvent.click(srcDir);
-
+    // The src directory should already be expanded because it contains changes,
+    // so index.ts should be visible without needing to click
     const indexElement = screen.getByText('index.ts').parentElement;
     expect(indexElement).toHaveClass('bg-accent');
   });
@@ -104,9 +108,8 @@ describe('FileBrowser', () => {
       />
     );
 
-    const srcDir = screen.getByText('src');
-    fireEvent.click(srcDir);
-
+    // The src directory should already be expanded because it contains changes,
+    // so the files with changes should be visible
     const modifiedFile = screen.getByText('index.ts').parentElement;
     expect(modifiedFile?.querySelector('.text-yellow-500')).toBeInTheDocument();
 

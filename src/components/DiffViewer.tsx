@@ -18,7 +18,6 @@ export function DiffViewer({ diff, viewMode, highlighterEnabled = false, linkHig
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<string | null>(null);
-  const [dragIsRemoving, setDragIsRemoving] = useState(false);
 
   // Expose clear function to parent
   useEffect(() => {
@@ -227,8 +226,8 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
       <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b">
         No changes between commits
       </div>
-      <ScrollArea className="h-[calc(100%-40px)]">
-        <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
+      <ScrollArea className="h-[calc(100%-40px)] w-full">
+        <div className="font-mono text-sm w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
           {lines.map((line, index) => {
             const lineId = `unchanged-${index + 1}`;
             const isHighlighted = highlightedLines.has(lineId);
@@ -262,7 +261,7 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
                 <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
                   {index + 1}
                 </span>
-                <span className="flex-1 px-4 py-0.5 whitespace-pre">
+                <span className="px-4 py-0.5 whitespace-pre">
                   {expandTabs(line, settings.tabSize)}
                 </span>
               </div>
@@ -381,8 +380,8 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
+    <ScrollArea className="h-full w-full">
+      <div className="font-mono text-sm w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
         {diff.hunks.map((hunk, hunkIndex) => (
           <div key={hunkIndex} className="border-b last:border-b-0">
             <div className="bg-muted px-4 py-2 text-muted-foreground">
@@ -426,7 +425,7 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
                   <span className="w-4 select-none px-2 py-0.5 text-muted-foreground">
                     {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
                   </span>
-                  <span className="flex-1 px-2 py-0.5 whitespace-pre">
+                  <span className="px-2 py-0.5 whitespace-pre">
                     {expandTabs(line.content, settings.tabSize)}
                   </span>
                 </div>
@@ -626,7 +625,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
             &nbsp;
           </span>
-          <span className="flex-1 px-4 py-0.5 bg-muted/30">&nbsp;</span>
+          <span className="px-4 py-0.5 bg-muted/30 block">&nbsp;</span>
         </div>
       );
     }
@@ -663,7 +662,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
             &nbsp;
           </span>
-          <span className="flex-1 px-4 py-0.5 bg-muted/30">&nbsp;</span>
+          <span className="px-4 py-0.5 bg-muted/30 block">&nbsp;</span>
         </div>
       );
     }
@@ -698,7 +697,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           {lineNumber}
         </span>
         <span className={cn(
-          "flex-1 px-4 py-0.5 whitespace-pre",
+          "px-4 py-0.5 whitespace-pre block",
           isAdd && "text-green-700 dark:text-green-400",
           isDelete && "text-red-700 dark:text-red-400"
         )}>
@@ -745,7 +744,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           className="h-[calc(100%-40px)] overflow-auto"
           onScroll={handleScroll('left')}
         >
-          <div style={{ lineHeight: settings.lineHeight }}>
+          <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
             {processedLines.map((linePair, index) => (
               <div key={index}>
                 {renderLine(linePair.old, linePair.old?.oldLineNumber, 'old', index, processedLines)}
@@ -763,7 +762,7 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           className="h-[calc(100%-40px)] overflow-auto"
           onScroll={handleScroll('right')}
         >
-          <div style={{ lineHeight: settings.lineHeight }}>
+          <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
             {processedLines.map((linePair, index) => (
               <div key={index}>
                 {renderLine(linePair.new, linePair.new?.newLineNumber, 'new', index, processedLines)}

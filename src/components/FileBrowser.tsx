@@ -46,7 +46,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
     return false;
   };
 
-  // Auto-expand directories that contain changes
+  // Auto-expand directories that contain changes (only on initial load)
   useEffect(() => {
     const pathsWithChanges = new Set<string>(['/']);
     
@@ -74,8 +74,16 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
       fileTree.children.forEach(child => collectPathsWithChanges(child));
     }
     
-    setExpandedDirs(pathsWithChanges);
-  }, [fileTree, hasChangesInSubtree]);
+    // Only auto-expand on initial load, preserve user's manual expansions
+    setExpandedDirs(prev => {
+      // If this is the first load (prev only has root '/'), use the auto-expanded paths
+      if (prev.size === 1 && prev.has('/')) {
+        return pathsWithChanges;
+      }
+      // Otherwise, merge the auto-expanded paths with existing manual expansions
+      return new Set([...prev, ...pathsWithChanges]);
+    });
+  }, [fileTree]);
 
   const getChangeIcon = (changeType: FileChangeType) => {
     switch (changeType) {
@@ -105,8 +113,8 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
           key={node.path}
           className={cn(
             "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent",
-            isSelected && "bg-accent",
-            node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400"
+            node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400",
+            isSelected && "bg-accent"
           )}
           style={{ paddingLeft }}
           onClick={() => onFileSelect(node.path)}
