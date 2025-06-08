@@ -60,6 +60,44 @@ describe('DiffService', () => {
     expect(hunks.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('should generate full file diff with all lines included', () => {
+    const diffService = new DiffService();
+    const oldContent = 'line1\nline2\nline3\nline4\nline5';
+    const newContent = 'line1\nmodified line2\nline3\nline4\nline5\nline6';
+    
+    const hunks = diffService.generateFullFileDiff(oldContent, newContent);
+    
+    // Should return exactly one hunk containing the entire file
+    expect(hunks).toHaveLength(1);
+    
+    const hunk = hunks[0];
+    expect(hunk.oldStart).toBe(1);
+    expect(hunk.newStart).toBe(1);
+    expect(hunk.oldLines).toBe(5); // old file has 5 lines
+    expect(hunk.newLines).toBe(6); // new file has 6 lines
+    
+    // Should contain all lines from both files
+    const normalLines = hunk.lines.filter(l => l.type === 'normal');
+    const deletedLines = hunk.lines.filter(l => l.type === 'delete');
+    const addedLines = hunk.lines.filter(l => l.type === 'add');
+    
+    // Based on how diff.diffLines works, the expected counts are:
+    expect(normalLines).toHaveLength(3); // line1, line3, line4
+    expect(deletedLines).toHaveLength(2); // original line2, line5 (as part of the last chunk)
+    expect(addedLines).toHaveLength(3); // modified line2, line5 (unchanged but in new position), line6
+    
+    // Verify specific content
+    expect(normalLines.find(l => l.content === 'line1')).toBeDefined();
+    expect(normalLines.find(l => l.content === 'line3')).toBeDefined();
+    expect(normalLines.find(l => l.content === 'line4')).toBeDefined();
+    expect(deletedLines.find(l => l.content === 'line2')).toBeDefined();
+    expect(addedLines.find(l => l.content === 'modified line2')).toBeDefined();
+    expect(addedLines.find(l => l.content === 'line6')).toBeDefined();
+    
+    // Verify the total number of lines covers the entire file
+    expect(hunk.lines.length).toBe(8); // All lines from both files
+  });
+
   function makeTestLargeFileWithSeparatedChanges() {
     const oldContent = Array.from({ length: 20 }, (_, i) => `line${i + 1}`).join('\n');
     const newContent = oldContent

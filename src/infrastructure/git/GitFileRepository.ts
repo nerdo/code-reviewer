@@ -78,7 +78,7 @@ export class GitFileRepository implements IFileRepository {
     }
 
     const isBinary = await this.isFileBinary(repoPath, toHash, filePath);
-    const hunks = isBinary ? [] : this.diffService.generateDiff(oldContent, newContent);
+    const hunks = isBinary ? [] : this.diffService.generateFullFileDiff(oldContent, newContent);
 
     return {
       path: filePath,
