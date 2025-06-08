@@ -12,6 +12,7 @@ interface AutocompleteSelectProps {
   className?: string;
   renderOption?: (option: string) => React.ReactNode;
   currentItem?: string; // Special item to show first (like current branch)
+  filterFunction?: (option: string, inputValue: string) => boolean; // Custom filter function
 }
 
 export function AutocompleteSelect({
@@ -21,7 +22,8 @@ export function AutocompleteSelect({
   placeholder = "Type to search...",
   className,
   renderOption,
-  currentItem
+  currentItem,
+  filterFunction
 }: AutocompleteSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(''); // Separate input from selected value
@@ -35,13 +37,16 @@ export function AutocompleteSelect({
     if (!inputValue.trim()) {
       setFilteredOptions(options);
     } else {
-      const filtered = options.filter(option =>
-        option.toLowerCase().includes(inputValue.toLowerCase())
-      );
+      const filtered = options.filter(option => {
+        if (filterFunction) {
+          return filterFunction(option, inputValue);
+        }
+        return option.toLowerCase().includes(inputValue.toLowerCase());
+      });
       setFilteredOptions(filtered);
     }
     setHighlightedIndex(-1);
-  }, [inputValue, options]);
+  }, [inputValue, options, filterFunction]);
 
   // Don't update input when value changes externally - keep them separate
 

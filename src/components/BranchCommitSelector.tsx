@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { Input } from './ui/input';
 import { AutocompleteSelect } from './AutocompleteSelect';
-import { GitBranch, Tag, GitCommit } from 'lucide-react';
+import { GitBranch, Tag, GitCommit, Calendar } from 'lucide-react';
 import { Commit } from '@/domain/entities/Commit';
 
 type ReferenceType = 'branch' | 'tag';
@@ -17,6 +18,10 @@ interface BranchCommitSelectorProps {
   onValueChange: (value: string, type: ReferenceType, branch?: string) => void;
   onBranchChange?: (branch: string) => void;
   defaultType?: ReferenceType;
+  dateFilter?: 'any' | 'today' | 'last7' | 'last30' | 'last90' | 'custom';
+  onDateFilterChange?: (filter: 'any' | 'today' | 'last7' | 'last30' | 'last90' | 'custom') => void;
+  customDate?: string;
+  onCustomDateChange?: (date: string) => void;
 }
 
 export function BranchCommitSelector({ 
@@ -28,7 +33,11 @@ export function BranchCommitSelector({
   value, 
   onValueChange,
   onBranchChange,
-  defaultType = 'branch'
+  defaultType = 'branch',
+  dateFilter = 'any',
+  onDateFilterChange,
+  customDate = '',
+  onCustomDateChange
 }: BranchCommitSelectorProps) {
   const [referenceType, setReferenceType] = useState<ReferenceType>(defaultType);
   const [selectedBranch, setSelectedBranch] = useState<string>(currentBranch);
@@ -89,43 +98,71 @@ export function BranchCommitSelector({
             {selectedBranch && (
               <>
                 <span className="text-sm text-muted-foreground">at</span>
-                <Select value={selectedCommit} onValueChange={handleCommitChange}>
-                  <SelectTrigger className="w-[280px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[280px]">
-                    <SelectItem value="HEAD">
-                      <div className="flex items-center gap-2">
-                        <GitCommit className="h-4 w-4" />
-                        <span className="font-medium">HEAD (latest)</span>
+                <AutocompleteSelect
+                  value={selectedCommit === 'HEAD' ? 'HEAD' : selectedCommit}
+                  onValueChange={handleCommitChange}
+                  options={['HEAD', ...commits.map(c => c.hash)]}
+                  placeholder="Type to search commits..."
+                  className="w-[300px]"
+                  filterFunction={(option, inputValue) => {
+                    if (option === 'HEAD') {
+                      return 'HEAD'.toLowerCase().includes(inputValue.toLowerCase()) ||
+                             'latest'.toLowerCase().includes(inputValue.toLowerCase());
+                    }
+                    
+                    const commit = commits.find(c => c.hash === option);
+                    if (!commit) return false;
+                    
+                    const searchTerm = inputValue.toLowerCase();
+                    const commitDate = new Date(commit.date);
+                    
+                    // Format dates for searching
+                    const fullDate = commitDate.toLocaleDateString(); // e.g., "12/25/2023"
+                    const isoDate = commitDate.toISOString().split('T')[0]; // e.g., "2023-12-25"
+                    const readableDate = commitDate.toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    }); // e.g., "Dec 25, 2023"
+                    
+                    return commit.hash.toLowerCase().includes(searchTerm) ||
+                           commit.message.toLowerCase().includes(searchTerm) ||
+                           commit.author.toLowerCase().includes(searchTerm) ||
+                           fullDate.includes(searchTerm) ||
+                           isoDate.includes(searchTerm) ||
+                           readableDate.toLowerCase().includes(searchTerm);
+                  }}
+                  renderOption={(option) => {
+                    if (option === 'HEAD') {
+                      return (
+                        <div className="flex items-center gap-2">
+                          <GitCommit className="h-4 w-4" />
+                          <span className="font-medium">HEAD (latest)</span>
+                        </div>
+                      );
+                    }
+                    
+                    const commit = commits.find(c => c.hash === option);
+                    if (!commit) return <span>{option}</span>;
+                    
+                    return (
+                      <div className="flex flex-col gap-1 py-1 min-w-0 max-w-[250px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <GitCommit className="h-4 w-4 flex-shrink-0" />
+                          <span className="font-mono text-xs flex-shrink-0">{commit.hash.substring(0, 7)}</span>
+                          <span className="text-sm truncate">{commit.message}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                          <span className="truncate">{commit.author}</span>
+                          <span className="flex-shrink-0">•</span>
+                          <span className="flex-shrink-0">
+                            {new Date(commit.date).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                    </SelectItem>
-                    {commits.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground text-center">
-                        Loading commits...
-                      </div>
-                    ) : (
-                      commits.map((commit) => (
-                        <SelectItem key={commit.hash} value={commit.hash}>
-                          <div className="flex flex-col gap-1 py-1 min-w-0 max-w-[250px]">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <GitCommit className="h-4 w-4 flex-shrink-0" />
-                              <span className="font-mono text-xs flex-shrink-0">{commit.hash.substring(0, 7)}</span>
-                              <span className="text-sm truncate">{commit.message}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                              <span className="truncate">{commit.author}</span>
-                              <span className="flex-shrink-0">•</span>
-                              <span className="flex-shrink-0">
-                                {new Date(commit.date).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                    );
+                  }}
+                />
               </>
             )}
           </div>
@@ -151,23 +188,55 @@ export function BranchCommitSelector({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm text-muted-foreground">{label}:</label>
+    <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <Tabs value={referenceType} onValueChange={(v) => handleTypeChange(v as ReferenceType)}>
-          <TabsList className="h-8">
-            <TabsTrigger value="branch" className="text-xs px-2 py-1">
-              <GitBranch className="h-3 w-3 mr-1" />
-              Branch
-            </TabsTrigger>
-            <TabsTrigger value="tag" className="text-xs px-2 py-1">
-              <Tag className="h-3 w-3 mr-1" />
-              Tag
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        {renderSelector()}
+        <label className="text-sm text-muted-foreground">{label}:</label>
+        <div className="flex items-center gap-2">
+          <Tabs value={referenceType} onValueChange={(v) => handleTypeChange(v as ReferenceType)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="branch" className="text-xs px-2 py-1">
+                <GitBranch className="h-3 w-3 mr-1" />
+                Branch
+              </TabsTrigger>
+              <TabsTrigger value="tag" className="text-xs px-2 py-1">
+                <Tag className="h-3 w-3 mr-1" />
+                Tag
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {renderSelector()}
+        </div>
       </div>
+      
+      {onDateFilterChange && (
+        <div className="flex items-center gap-2 ml-12">
+          <Calendar className="h-3 w-3 text-muted-foreground" />
+          <Select 
+            value={dateFilter} 
+            onValueChange={(value: string) => onDateFilterChange(value as any)}
+          >
+            <SelectTrigger className="w-[160px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any time</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="last7">Last 7 days</SelectItem>
+              <SelectItem value="last30">Last 30 days</SelectItem>
+              <SelectItem value="last90">Last 3 months</SelectItem>
+              <SelectItem value="custom">Custom date...</SelectItem>
+            </SelectContent>
+          </Select>
+          {dateFilter === 'custom' && onCustomDateChange && (
+            <Input
+              type="date"
+              value={customDate}
+              onChange={(e) => onCustomDateChange(e.target.value)}
+              className="w-[140px] h-7 text-xs"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
 import { CommitSelector } from './components/CommitSelector';
 import { CommitFilter } from './components/CommitFilter';
 import { BranchCommitSelector } from './components/BranchCommitSelector';
+import { AutocompleteSelect } from './components/AutocompleteSelect';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { SettingsDialog } from './components/settings-dialog';
 import { api } from './services/api';
@@ -13,7 +15,7 @@ import { FileNode } from './domain/entities/FileNode';
 import { FileDiff } from './domain/entities/FileDiff';
 import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
-import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser, Filter, X, GripVertical } from 'lucide-react';
+import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser, GripVertical } from 'lucide-react';
 import { cn } from './lib/utils';
 import { useSettings } from './components/settings-provider';
 
@@ -42,28 +44,23 @@ function App() {
   const clearHighlightsRef = useRef<(() => void) | null>(null);
   
   // Commit filtering state
-  const [showCommitFilter, setShowCommitFilter] = useState(false);
   const [commitFilter, setCommitFilter] = useState({
-    hash: '',
-    message: '',
-    author: '',
-    dateFrom: '',
-    dateTo: ''
+    dateFrom: 'any' as 'any' | 'today' | 'last7' | 'last30' | 'last90' | 'custom',
+    dateTo: 'any' as 'any' | 'today' | 'last7' | 'last30' | 'last90' | 'custom',
+    customDateFrom: '',
+    customDateTo: ''
   });
 
   // Clear all filters
   const clearFilters = () => {
     setCommitFilter({
-      hash: '',
-      message: '',
-      author: '',
-      dateFrom: '',
-      dateTo: ''
+      dateFrom: 'any',
+      dateTo: 'any',
+      customDateFrom: '',
+      customDateTo: ''
     });
   };
 
-  // Check if any filters are active
-  const hasActiveFilters = Object.values(commitFilter).some(value => value !== '');
 
   // Sidebar resizing state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -114,37 +111,60 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isResizing]);
 
-  // Filter commits based on filter criteria
-  const filteredCommits = commits.filter(commit => {
-    // Hash filter (case insensitive)
-    if (commitFilter.hash && !commit.hash.toLowerCase().includes(commitFilter.hash.toLowerCase())) {
-      return false;
-    }
+
+  // Helper function to filter commits by date range
+  const filterCommitsByDateRange = (commitList: Commit[], dateFilter: string, customDate: string) => {
+    if (dateFilter === 'any') return commitList;
     
-    // Message filter (case insensitive)
-    if (commitFilter.message && !commit.message.toLowerCase().includes(commitFilter.message.toLowerCase())) {
-      return false;
-    }
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    // Author filter (case insensitive)
-    if (commitFilter.author && !commit.author.toLowerCase().includes(commitFilter.author.toLowerCase())) {
-      return false;
-    }
+    return commitList.filter(commit => {
+      const commitDate = new Date(commit.date);
+      
+      switch (dateFilter) {
+        case 'today':
+          const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          return commitDate >= today && commitDate <= endOfToday;
+          
+        case 'last7':
+          const last7Start = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+          const endOfToday7 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          return commitDate >= last7Start && commitDate <= endOfToday7;
+          
+        case 'last30':
+          const last30Start = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+          const endOfToday30 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          return commitDate >= last30Start && commitDate <= endOfToday30;
+          
+        case 'last90':
+          const last90Start = new Date(today.getTime() - 89 * 24 * 60 * 60 * 1000);
+          const endOfToday90 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
+          return commitDate >= last90Start && commitDate <= endOfToday90;
+          
+        case 'custom':
+          if (!customDate) return true;
+          const customDateStart = new Date(customDate);
+          const customDateEnd = new Date(customDateStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+          return commitDate >= customDateStart && commitDate <= customDateEnd;
+          
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Create filtered commits for FROM and TO selectors
+  const fromFilteredCommits = filterCommitsByDateRange(commits, commitFilter.dateFrom, commitFilter.customDateFrom);
+  const toFilteredCommits = filterCommitsByDateRange(commits, commitFilter.dateTo, commitFilter.customDateTo);
+  
+  const fromBranchFilteredCommits = branchCommits[fromBranch] 
+    ? filterCommitsByDateRange(branchCommits[fromBranch], commitFilter.dateFrom, commitFilter.customDateFrom)
+    : fromFilteredCommits;
     
-    // Date range filter
-    const commitDate = new Date(commit.date);
-    if (commitFilter.dateFrom) {
-      const fromDate = new Date(commitFilter.dateFrom);
-      if (commitDate < fromDate) return false;
-    }
-    if (commitFilter.dateTo) {
-      const toDate = new Date(commitFilter.dateTo);
-      toDate.setHours(23, 59, 59, 999); // Include the entire end date
-      if (commitDate > toDate) return false;
-    }
-    
-    return true;
-  });
+  const toBranchFilteredCommits = branchCommits[toBranch] 
+    ? filterCommitsByDateRange(branchCommits[toBranch], commitFilter.dateTo, commitFilter.customDateTo)
+    : toFilteredCommits;
 
   const cycleLinkMode = () => {
     if (!linkHighlights) {
@@ -314,7 +334,7 @@ function App() {
                   label="From"
                   branches={repository.branches}
                   tags={repository.tags || []}
-                  commits={branchCommits[fromBranch] || commits}
+                  commits={fromBranchFilteredCommits}
                   currentBranch={repository.currentBranch}
                   value={fromCommit}
                   onValueChange={(value, type, branch) => {
@@ -324,13 +344,17 @@ function App() {
                   }}
                   onBranchChange={(branch) => loadBranchCommits(branch)}
                   defaultType={fromType}
+                  dateFilter={commitFilter.dateFrom}
+                  onDateFilterChange={(filter) => setCommitFilter(prev => ({ ...prev, dateFrom: filter }))}
+                  customDate={commitFilter.customDateFrom}
+                  onCustomDateChange={(date) => setCommitFilter(prev => ({ ...prev, customDateFrom: date }))}
                 />
                 
                 <BranchCommitSelector 
                   label="To"
                   branches={repository.branches}
                   tags={repository.tags || []}
-                  commits={branchCommits[toBranch] || commits}
+                  commits={toBranchFilteredCommits}
                   currentBranch={repository.currentBranch}
                   value={toCommit}
                   onValueChange={(value, type, branch) => {
@@ -340,89 +364,15 @@ function App() {
                   }}
                   onBranchChange={(branch) => loadBranchCommits(branch)}
                   defaultType={toType}
+                  dateFilter={commitFilter.dateTo}
+                  onDateFilterChange={(filter) => setCommitFilter(prev => ({ ...prev, dateTo: filter }))}
+                  customDate={commitFilter.customDateTo}
+                  onCustomDateChange={(date) => setCommitFilter(prev => ({ ...prev, customDateTo: date }))}
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={hasActiveFilters ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowCommitFilter(!showCommitFilter)}
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filter {hasActiveFilters && `(${Object.values(commitFilter).filter(v => v !== '').length})`}
-                </Button>
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Clear
-                  </Button>
-                )}
-              </div>
             </div>
             
-            {showCommitFilter && (
-              <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Hash</label>
-                    <Input
-                      placeholder="Partial hash..."
-                      value={commitFilter.hash}
-                      onChange={(e) => setCommitFilter(prev => ({ ...prev, hash: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Commit Message</label>
-                    <Input
-                      placeholder="Search in message..."
-                      value={commitFilter.message}
-                      onChange={(e) => setCommitFilter(prev => ({ ...prev, message: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Author</label>
-                    <Input
-                      placeholder="Author name..."
-                      value={commitFilter.author}
-                      onChange={(e) => setCommitFilter(prev => ({ ...prev, author: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">From Date</label>
-                    <Input
-                      type="date"
-                      value={commitFilter.dateFrom}
-                      onChange={(e) => setCommitFilter(prev => ({ ...prev, dateFrom: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">To Date</label>
-                    <Input
-                      type="date"
-                      value={commitFilter.dateTo}
-                      onChange={(e) => setCommitFilter(prev => ({ ...prev, dateTo: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-end">
-                    <div className="text-sm text-muted-foreground">
-                      {filteredCommits.length} of {commits.length} commits
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </header>
