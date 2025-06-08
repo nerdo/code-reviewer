@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import { ScrollArea } from "./ui/scroll-area"
 import { cn, expandTabs } from "@/lib/utils"
 import { useSettings, type Settings } from "./settings-provider"
@@ -196,6 +197,19 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </TabsContent>
 
                 <TabsContent value="defaults" className="space-y-6 mt-0">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Default Repository Path</Label>
+                    <Input
+                      value={tempSettings.defaultRepositoryPath}
+                      onChange={(e) => setTempSettings(prev => ({ ...prev, defaultRepositoryPath: e.target.value }))}
+                      placeholder="Enter repository path (e.g., . or ./my-repo)"
+                      className="w-full"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      Path to the git repository. Use '.' for current directory.
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Default View Mode</Label>
                     <DropdownMenu>

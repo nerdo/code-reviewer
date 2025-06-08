@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
-import { CommitSelector } from './components/CommitSelector';
-import { CommitFilter } from './components/CommitFilter';
 import { BranchCommitSelector } from './components/BranchCommitSelector';
-import { AutocompleteSelect } from './components/AutocompleteSelect';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { SettingsDialog } from './components/settings-dialog';
 import { api } from './services/api';
@@ -21,7 +17,7 @@ import { useSettings } from './components/settings-provider';
 
 function App() {
   const { settings } = useSettings();
-  const [repoPath, setRepoPath] = useState<string>('./test-repo');
+  const [repoPath, setRepoPath] = useState<string>(settings.defaultRepositoryPath);
   const [repository, setRepository] = useState<Repository | null>(null);
   const [commits, setCommits] = useState<Commit[]>([]);
   const [fromCommit, setFromCommit] = useState<string>('');
@@ -51,16 +47,6 @@ function App() {
     customDateTo: ''
   });
 
-  // Clear all filters
-  const clearFilters = () => {
-    setCommitFilter({
-      dateFrom: 'any',
-      dateTo: 'any',
-      customDateFrom: '',
-      customDateTo: ''
-    });
-  };
-
 
   // Sidebar resizing state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -73,6 +59,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem('code-reviewer-sidebar-width', sidebarWidth.toString());
   }, [sidebarWidth]);
+
+  // Update repo path when settings change
+  useEffect(() => {
+    setRepoPath(settings.defaultRepositoryPath);
+  }, [settings.defaultRepositoryPath]);
 
   // Handle sidebar resize
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -123,31 +114,31 @@ function App() {
       const commitDate = new Date(commit.date);
       
       switch (dateFilter) {
-        case 'today':
+        case 'today': {
           const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
           return commitDate >= today && commitDate <= endOfToday;
-          
-        case 'last7':
+        }
+        case 'last7': {
           const last7Start = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
           const endOfToday7 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
           return commitDate >= last7Start && commitDate <= endOfToday7;
-          
-        case 'last30':
+        }
+        case 'last30': {
           const last30Start = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
           const endOfToday30 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
           return commitDate >= last30Start && commitDate <= endOfToday30;
-          
-        case 'last90':
+        }
+        case 'last90': {
           const last90Start = new Date(today.getTime() - 89 * 24 * 60 * 60 * 1000);
           const endOfToday90 = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1);
           return commitDate >= last90Start && commitDate <= endOfToday90;
-          
-        case 'custom':
+        }
+        case 'custom': {
           if (!customDate) return true;
           const customDateStart = new Date(customDate);
           const customDateEnd = new Date(customDateStart.getTime() + 24 * 60 * 60 * 1000 - 1);
           return commitDate >= customDateStart && commitDate <= customDateEnd;
-          
+        }
         default:
           return true;
       }

@@ -10,6 +10,7 @@ export type Settings = {
   defaultHighlighterEnabled: boolean
   defaultLinkHighlights: boolean
   defaultLinkMode: 'line-number' | 'visual-position'
+  defaultRepositoryPath: string
 }
 
 type SettingsContextType = {
@@ -24,7 +25,8 @@ const defaultSettings: Settings = {
   defaultViewMode: 'side-by-side',
   defaultHighlighterEnabled: false,
   defaultLinkHighlights: true,
-  defaultLinkMode: 'line-number'
+  defaultLinkMode: 'line-number',
+  defaultRepositoryPath: '.'
 }
 
 const SettingsContext = createContext<SettingsContextType>({

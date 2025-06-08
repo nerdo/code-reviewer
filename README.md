@@ -1,55 +1,86 @@
-# Code Reviewer
+# @nerdo/code-reviewer
 
-A web application for reviewing code changes between git commits with an intuitive file browser and diff viewer.
+A modern, web-based visual git diff tool for reviewing code changes between commits, branches, and tags.
 
 ## Features
 
-- **File Browser**: Navigate through your codebase with clear visual indicators for added, modified, deleted, and renamed files
-- **Side-by-Side Diff Viewer**: Compare changes between two commits with synchronized scrolling
-- **Inline Diff Viewer**: View changes inline with color-coded additions and deletions
-- **Git Integration**: Built on top of simple-git with a clean domain layer abstraction
-- **TypeScript**: Fully typed codebase for better development experience
-- **Comprehensive Tests**: Unit tests for all core functionality
+- 🔍 **Universal Search**: Search commits by hash, message, author, or date
+- 📅 **Smart Date Filtering**: Quick presets (Today, Last 7 days, etc.) or custom ranges  
+- 🌲 **Branch & Tag Support**: Compare any combination of branches, tags, and commits
+- 📁 **File Browser**: Navigate through changed files with syntax highlighting
+- 👁️ **Multiple Views**: Side-by-side, inline, or unchanged file views
+- 🎯 **Intelligent Highlighting**: Visual indicators for additions, deletions, and changes
+- ⚡ **Fast & Responsive**: Built with React and optimized for performance
 
-## Architecture
+## Installation & Usage
 
-The application follows clean architecture principles:
+### Quick Start (Recommended)
 
-- **Domain Layer**: Core entities and business logic (decoupled from git)
-- **Infrastructure Layer**: Git integration using simple-git
-- **Application Layer**: Express.js API endpoints
-- **Presentation Layer**: React frontend with shadcn/ui components
+Run directly in any git repository:
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18 or higher
-- npm
-- Git repository to review
-
-### Installation
-
-1. Install dependencies:
 ```bash
-npm install
+npx @nerdo/code-reviewer
 ```
 
-2. Start the development server:
+### Global Installation
+
 ```bash
-npm run dev
+npm install -g @nerdo/code-reviewer
+code-reviewer
 ```
 
-This will start both the Express.js server (port 3001) and the React development server (port 3000).
+### Options
 
-### Usage
+```bash
+npx @nerdo/code-reviewer [options]
 
-1. Open your browser to `http://localhost:3000`
-2. The app will load the current repository (or configure the path in `App.tsx`)
-3. Select two commits from the dropdown menus to compare
-4. Browse files in the left panel - changed files will have visual indicators
-5. Click on a file to view its diff
-6. Toggle between side-by-side and inline diff views
+Options:
+  -p, --port <port>    Port to run on (default: 3001)
+  -h, --help          Show help message
+  --version           Show version
+
+Examples:
+  npx @nerdo/code-reviewer
+  npx @nerdo/code-reviewer --port 8080
+```
+
+## How to Use
+
+1. **Navigate to a git repository** in your terminal
+2. **Run the command**: `npx @nerdo/code-reviewer`
+3. **Your browser opens automatically** to the code review interface
+4. **Select what to compare**:
+   - Choose FROM: branch, tag, or commit
+   - Choose TO: branch, tag, or commit  
+   - Apply date filters if needed
+5. **Review the changes**:
+   - Browse files in the left sidebar
+   - View diffs in side-by-side or inline mode
+   - Use universal search to find specific commits
+
+## Interface Overview
+
+### Selection Controls
+- **Branch/Tag Tabs**: Switch between branches and tags
+- **Autocomplete Search**: Type to filter and find branches, tags, or commits
+- **Date Filters**: Filter commits by time ranges (Today, Last 7 days, custom dates)
+- **Universal Search**: Search commits by hash, message, author, or date
+
+### Diff Views
+- **Side-by-side**: Traditional two-column diff view
+- **Inline**: Unified diff with changes highlighted inline
+- **Unchanged**: View complete file content without diff highlighting
+
+### File Browser
+- **Tree Structure**: Navigate files and folders
+- **Change Indicators**: See which files were added, modified, or deleted
+- **Quick Navigation**: Click any file to jump to its diff
+
+## Requirements
+
+- **Node.js**: Version 16 or higher
+- **Git**: Must be run from within a git repository
+- **Browser**: Modern browser with JavaScript enabled
 
 ## Development
 
