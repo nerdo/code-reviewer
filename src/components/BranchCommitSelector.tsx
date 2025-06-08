@@ -79,31 +79,53 @@ export function BranchCommitSelector({
     switch (referenceType) {
       case 'branch':
         return (
-          <div className="flex items-center gap-2">
-            <AutocompleteSelect
-              value={selectedBranch}
-              onValueChange={handleBranchChange}
-              options={branches}
-              placeholder="Type branch name..."
-              className="w-[200px]"
-              currentItem={currentBranch}
-              renderOption={(branch) => (
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  <span>{branch}</span>
-                </div>
-              )}
-            />
+          <div className="flex flex-col gap-2">
+            {/* First line: Branch/Tag selection */}
+            <div className="flex items-center gap-2">
+              <AutocompleteSelect
+                value={selectedBranch}
+                onValueChange={handleBranchChange}
+                options={branches}
+                placeholder="Type branch name..."
+                className="w-[400px]"
+                currentItem={currentBranch}
+                renderOption={(branch) => (
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4" />
+                    <span>{branch}</span>
+                  </div>
+                )}
+              />
+            </div>
 
+            {/* Second line: Commit selection and date filter */}
             {selectedBranch && (
-              <>
-                <span className="text-sm text-muted-foreground">at</span>
+              <div className="flex items-center gap-2">
                 <AutocompleteSelect
                   value={selectedCommit === 'HEAD' ? 'HEAD' : selectedCommit}
                   onValueChange={handleCommitChange}
                   options={['HEAD', ...commits.map(c => c.hash)]}
                   placeholder="Type to search commits..."
-                  className="w-[300px]"
+                  className="flex-1 min-w-[500px]"
+                  getDisplayValue={(value) => {
+                    if (value === 'HEAD') {
+                      return 'HEAD (latest)';
+                    }
+                    
+                    const commit = commits.find(c => c.hash === value);
+                    if (!commit) return value;
+                    
+                    const shortHash = commit.hash.substring(0, 7);
+                    const truncatedMessage = commit.message.length > 60 
+                      ? commit.message.substring(0, 60) + '...' 
+                      : commit.message;
+                    const shortDate = new Date(commit.date).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    });
+                    
+                    return `[${shortHash}] ${truncatedMessage} • ${commit.author} • ${shortDate}`;
+                  }}
                   filterFunction={(option, inputValue) => {
                     if (option === 'HEAD') {
                       return 'HEAD'.toLowerCase().includes(inputValue.toLowerCase()) ||
@@ -135,7 +157,7 @@ export function BranchCommitSelector({
                   renderOption={(option) => {
                     if (option === 'HEAD') {
                       return (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 py-2">
                           <GitCommit className="h-4 w-4" />
                           <span className="font-medium">HEAD (latest)</span>
                         </div>
@@ -146,17 +168,21 @@ export function BranchCommitSelector({
                     if (!commit) return <span>{option}</span>;
                     
                     return (
-                      <div className="flex flex-col gap-1 py-1 min-w-0 max-w-[250px]">
+                      <div className="flex flex-col gap-1 py-2 min-w-0 max-w-[500px]">
                         <div className="flex items-center gap-2 min-w-0">
                           <GitCommit className="h-4 w-4 flex-shrink-0" />
                           <span className="font-mono text-xs flex-shrink-0">{commit.hash.substring(0, 7)}</span>
                           <span className="text-sm truncate">{commit.message}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 ml-6">
                           <span className="truncate">{commit.author}</span>
                           <span className="flex-shrink-0">•</span>
                           <span className="flex-shrink-0">
-                            {new Date(commit.date).toLocaleDateString()}
+                            {new Date(commit.date).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
                           </span>
                         </div>
                       </div>
@@ -165,7 +191,7 @@ export function BranchCommitSelector({
                 />
                 
                 {onDateFilterChange && (
-                  <>
+                  <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3 text-muted-foreground" />
                     <Select 
                       value={dateFilter} 
@@ -191,9 +217,9 @@ export function BranchCommitSelector({
                         className="w-[120px] h-8 text-xs"
                       />
                     )}
-                  </>
+                  </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         );
@@ -205,7 +231,7 @@ export function BranchCommitSelector({
             onValueChange={handleTagChange}
             options={tags}
             placeholder={tags.length === 0 ? "No tags available" : "Type tag name..."}
-            className="w-[300px]"
+            className="w-[400px]"
             renderOption={(tag) => (
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4" />

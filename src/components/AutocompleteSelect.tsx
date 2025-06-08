@@ -13,6 +13,7 @@ interface AutocompleteSelectProps {
   renderOption?: (option: string) => React.ReactNode;
   currentItem?: string; // Special item to show first (like current branch)
   filterFunction?: (option: string, inputValue: string) => boolean; // Custom filter function
+  getDisplayValue?: (value: string) => string; // Custom display for selected value
 }
 
 export function AutocompleteSelect({
@@ -23,7 +24,8 @@ export function AutocompleteSelect({
   className,
   renderOption,
   currentItem,
-  filterFunction
+  filterFunction,
+  getDisplayValue
 }: AutocompleteSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(''); // Separate input from selected value
@@ -65,6 +67,10 @@ export function AutocompleteSelect({
 
   const handleInputFocus = () => {
     setIsOpen(true);
+    // Show all options when focusing (like original Select behavior)
+    if (!inputValue.trim()) {
+      setFilteredOptions(options);
+    }
   };
 
   const handleInputBlur = () => {
@@ -76,6 +82,10 @@ export function AutocompleteSelect({
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
         setIsOpen(true);
+        // Show all options when opening via keyboard
+        if (!inputValue.trim()) {
+          setFilteredOptions(options);
+        }
         return;
       }
     }
@@ -133,7 +143,7 @@ export function AutocompleteSelect({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onKeyDown={handleKeyDown}
-          placeholder={value || placeholder}
+          placeholder={getDisplayValue ? (value ? getDisplayValue(value) : placeholder) : (value || placeholder)}
           className="pr-16"
         />
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -152,7 +162,14 @@ export function AutocompleteSelect({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              const newIsOpen = !isOpen;
+              setIsOpen(newIsOpen);
+              // Show all options when opening dropdown
+              if (newIsOpen && !inputValue.trim()) {
+                setFilteredOptions(options);
+              }
+            }}
             className="h-6 w-6 p-0 hover:bg-muted"
           >
             <ChevronDown className={cn("h-3 w-3 transition-transform", isOpen && "rotate-180")} />
