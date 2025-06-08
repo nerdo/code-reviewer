@@ -149,12 +149,23 @@ function App() {
   return (
     <div className="flex h-screen flex-col">
       <header className="border-b px-4 py-3 space-y-3">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
             <span className="font-semibold">Code Reviewer</span>
           </div>
           
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">Settings</span>
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm text-muted-foreground">Repository Path:</label>
             <Input
@@ -169,26 +180,15 @@ function App() {
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             Load Repository
           </Button>
-          
-          <div className="ml-auto flex items-center gap-2">
-            {repository && (
-              <span className="text-sm text-muted-foreground">
-                Branch: {repository.currentBranch}
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowSettings(true)}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="sr-only">Settings</span>
-            </Button>
-          </div>
         </div>
         
         {repository && (
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Branch: {repository.currentBranch}
+              </span>
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-muted-foreground">From:</label>
               <Select value={fromCommit} onValueChange={setFromCommit}>
