@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
 import { Button } from './components/ui/button';
@@ -11,7 +11,7 @@ import { FileNode } from './domain/entities/FileNode';
 import { FileDiff } from './domain/entities/FileDiff';
 import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
-import { GitBranch, RefreshCw, Settings } from 'lucide-react';
+import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser } from 'lucide-react';
 import { cn } from './lib/utils';
 
 function App() {
@@ -27,6 +27,32 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showSettings, setShowSettings] = useState(false);
+  const [highlighterEnabled, setHighlighterEnabled] = useState(false);
+  const [linkHighlights, setLinkHighlights] = useState(true);
+  const [linkMode, setLinkMode] = useState<'line-number' | 'visual-position'>('line-number');
+  const clearHighlightsRef = useRef<(() => void) | null>(null);
+
+  const cycleLinkMode = () => {
+    if (!linkHighlights) {
+      setLinkHighlights(true);
+      setLinkMode('line-number');
+    } else if (linkMode === 'line-number') {
+      setLinkMode('visual-position');
+    } else {
+      setLinkHighlights(false);
+      setLinkMode('line-number');
+    }
+  };
+
+  const getLinkButtonContent = () => {
+    if (!linkHighlights) {
+      return { icon: Link2Off, text: 'No Link', variant: 'outline' as const };
+    } else if (linkMode === 'line-number') {
+      return { icon: Hash, text: 'Link Line #', variant: 'default' as const };
+    } else {
+      return { icon: Eye, text: 'Link Visual', variant: 'default' as const };
+    }
+  };
 
   useEffect(() => {
     loadRepository();
@@ -236,17 +262,95 @@ function App() {
               const hasNoChanges = fileDiff.hunks.length === 0 && fileDiff.oldContent === fileDiff.newContent;
               
               if (hasNoChanges) {
-                return <DiffViewer diff={fileDiff} viewMode={viewMode} />;
+                return (
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between m-2">
+                      <div className="text-sm text-muted-foreground">Unchanged File</div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant={highlighterEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setHighlighterEnabled(!highlighterEnabled)}
+                          className="flex items-center gap-2"
+                        >
+                          <Highlighter className="h-4 w-4" />
+                          Highlighter
+                        </Button>
+                        {highlighterEnabled && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => clearHighlightsRef.current?.()}
+                            className="flex items-center gap-2"
+                          >
+                            <Eraser className="h-4 w-4" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <DiffViewer diff={fileDiff} viewMode={viewMode} highlighterEnabled={highlighterEnabled} linkHighlights={linkHighlights} linkMode={linkMode} clearHighlightsRef={clearHighlightsRef} />
+                    </div>
+                  </div>
+                );
               }
               
               return (
                 <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')}>
-                  <TabsList className="m-2">
-                    <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
-                    <TabsTrigger value="inline">Inline</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value={viewMode} className="h-[calc(100%-56px)] m-0">
-                    <DiffViewer diff={fileDiff} viewMode={viewMode} />
+                  <div className="flex items-center justify-between m-2">
+                    <TabsList>
+                      <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
+                      <TabsTrigger value="inline">Inline</TabsTrigger>
+                    </TabsList>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={highlighterEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setHighlighterEnabled(!highlighterEnabled)}
+                        className="flex items-center gap-2"
+                      >
+                        <Highlighter className="h-4 w-4" />
+                        Highlighter
+                      </Button>
+                      {highlighterEnabled && (
+                        <>
+                          {viewMode === 'side-by-side' && (() => {
+                            const linkContent = getLinkButtonContent();
+                            return (
+                              <Button
+                                variant={linkContent.variant}
+                                size="sm"
+                                onClick={cycleLinkMode}
+                                className="flex items-center gap-2"
+                              >
+                                <linkContent.icon className="h-4 w-4" />
+                                {linkContent.text}
+                              </Button>
+                            );
+                          })()}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => clearHighlightsRef.current?.()}
+                            className="flex items-center gap-2"
+                          >
+                            <Eraser className="h-4 w-4" />
+                            Clear
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <TabsContent value={viewMode} className="h-[calc(100%-64px)] m-0">
+                    <DiffViewer 
+                      diff={fileDiff} 
+                      viewMode={viewMode} 
+                      highlighterEnabled={highlighterEnabled}
+                      linkHighlights={linkHighlights}
+                      linkMode={linkMode}
+                      clearHighlightsRef={clearHighlightsRef}
+                    />
                   </TabsContent>
                 </Tabs>
               );
