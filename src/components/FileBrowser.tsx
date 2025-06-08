@@ -3,7 +3,7 @@ import { FileNode } from '@/domain/entities/FileNode';
 import { FileChangeType } from '@/domain/entities/FileChange';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Minus, Edit, MoveRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea, ScrollBar } from './ui/scroll-area';
 
 interface FileBrowserProps {
   fileTree: FileNode;
@@ -112,7 +112,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
         <div
           key={node.path}
           className={cn(
-            "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent",
+            "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent min-w-fit",
             node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400",
             isSelected && "bg-accent"
           )}
@@ -124,7 +124,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
             node.change && "text-blue-600 dark:text-blue-400"
           )} />
           <span className={cn(
-            "text-sm truncate",
+            "text-sm whitespace-nowrap",
             node.change && "font-medium text-blue-700 dark:text-blue-300"
           )}>{node.name}</span>
           {node.change && getChangeIcon(node.change.changeType)}
@@ -136,7 +136,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
       <div key={node.path}>
         <div
           className={cn(
-            "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent",
+            "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent min-w-fit",
             node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400",
             !node.change && hasNestedChanges && "bg-orange-50/50 dark:bg-orange-950/20 border-l-2 border-l-orange-300 dark:border-l-orange-600"
           )}
@@ -162,7 +162,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
             )} />
           )}
           <span className={cn(
-            "text-sm truncate",
+            "text-sm whitespace-nowrap",
             node.change && "font-medium text-blue-700 dark:text-blue-300",
             !node.change && hasNestedChanges && "font-medium text-orange-700 dark:text-orange-300"
           )}>{node.name}</span>
@@ -184,9 +184,12 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-2">
-        {fileTree.children?.map(child => renderNode(child))}
+      <div className="p-2 min-w-0">
+        <div className="min-w-fit">
+          {fileTree.children?.map(child => renderNode(child))}
+        </div>
       </div>
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 }
