@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
+import { CommitSelector } from './components/CommitSelector';
+import { CommitFilter } from './components/CommitFilter';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { SettingsDialog } from './components/settings-dialog';
 import { api } from './services/api';
@@ -295,57 +296,19 @@ function App() {
                   Branch: {repository.currentBranch}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground">From:</label>
-                <Select value={fromCommit} onValueChange={setFromCommit}>
-                  <SelectTrigger className="w-[400px]">
-                    <SelectValue placeholder="Select base commit" />
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[400px]">
-                    {filteredCommits.map((commit) => (
-                      <SelectItem key={commit.hash} value={commit.hash}>
-                        <div className="flex flex-col gap-1 py-1 min-w-0 max-w-[350px]">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-mono text-xs flex-shrink-0">{commit.hash.substring(0, 7)}</span>
-                            <span className="text-sm truncate">{commit.message}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                            <span className="truncate">{commit.author}</span>
-                            <span className="flex-shrink-0">•</span>
-                            <span className="flex-shrink-0">{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CommitSelector 
+                label="From"
+                commits={filteredCommits}
+                value={fromCommit}
+                onValueChange={setFromCommit}
+              />
               
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground">To:</label>
-                <Select value={toCommit} onValueChange={setToCommit}>
-                  <SelectTrigger className="w-[400px]">
-                    <SelectValue placeholder="Select target commit" />
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[400px]">
-                    {filteredCommits.map((commit) => (
-                      <SelectItem key={commit.hash} value={commit.hash}>
-                        <div className="flex flex-col gap-1 py-1 min-w-0 max-w-[350px]">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-mono text-xs flex-shrink-0">{commit.hash.substring(0, 7)}</span>
-                            <span className="text-sm truncate">{commit.message}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                            <span className="truncate">{commit.author}</span>
-                            <span className="flex-shrink-0">•</span>
-                            <span className="flex-shrink-0">{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CommitSelector 
+                label="To"
+                commits={filteredCommits}
+                value={toCommit}
+                onValueChange={setToCommit}
+              />
               
               <div className="ml-auto flex items-center gap-2">
                 <Button
