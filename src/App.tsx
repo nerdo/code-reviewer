@@ -11,7 +11,7 @@ import { FileNode } from './domain/entities/FileNode';
 import { FileDiff } from './domain/entities/FileDiff';
 import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
-import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser } from 'lucide-react';
+import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser, Filter, X } from 'lucide-react';
 import { cn } from './lib/utils';
 import { useSettings } from './components/settings-provider';
 
@@ -33,6 +33,62 @@ function App() {
   const [linkHighlights, setLinkHighlights] = useState(settings.defaultLinkHighlights);
   const [linkMode, setLinkMode] = useState<'line-number' | 'visual-position'>(settings.defaultLinkMode);
   const clearHighlightsRef = useRef<(() => void) | null>(null);
+  
+  // Commit filtering state
+  const [showCommitFilter, setShowCommitFilter] = useState(false);
+  const [commitFilter, setCommitFilter] = useState({
+    hash: '',
+    message: '',
+    author: '',
+    dateFrom: '',
+    dateTo: ''
+  });
+
+  // Clear all filters
+  const clearFilters = () => {
+    setCommitFilter({
+      hash: '',
+      message: '',
+      author: '',
+      dateFrom: '',
+      dateTo: ''
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(commitFilter).some(value => value !== '');
+
+  // Filter commits based on filter criteria
+  const filteredCommits = commits.filter(commit => {
+    // Hash filter (case insensitive)
+    if (commitFilter.hash && !commit.hash.toLowerCase().includes(commitFilter.hash.toLowerCase())) {
+      return false;
+    }
+    
+    // Message filter (case insensitive)
+    if (commitFilter.message && !commit.message.toLowerCase().includes(commitFilter.message.toLowerCase())) {
+      return false;
+    }
+    
+    // Author filter (case insensitive)
+    if (commitFilter.author && !commit.author.toLowerCase().includes(commitFilter.author.toLowerCase())) {
+      return false;
+    }
+    
+    // Date range filter
+    const commitDate = new Date(commit.date);
+    if (commitFilter.dateFrom) {
+      const fromDate = new Date(commitFilter.dateFrom);
+      if (commitDate < fromDate) return false;
+    }
+    if (commitFilter.dateTo) {
+      const toDate = new Date(commitFilter.dateTo);
+      toDate.setHours(23, 59, 59, 999); // Include the entire end date
+      if (commitDate > toDate) return false;
+    }
+    
+    return true;
+  });
 
   const cycleLinkMode = () => {
     if (!linkHighlights) {
@@ -183,64 +239,146 @@ function App() {
         </div>
         
         {repository && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Branch: {repository.currentBranch}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground">From:</label>
-              <Select value={fromCommit} onValueChange={setFromCommit}>
-                <SelectTrigger className="w-[400px]">
-                  <SelectValue placeholder="Select base commit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {commits.map((commit) => (
-                    <SelectItem key={commit.hash} value={commit.hash}>
-                      <div className="flex flex-col gap-1 py-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
-                          <span className="text-sm">{commit.message.substring(0, 60)}</span>
+          <>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Branch: {repository.currentBranch}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">From:</label>
+                <Select value={fromCommit} onValueChange={setFromCommit}>
+                  <SelectTrigger className="w-[400px]">
+                    <SelectValue placeholder="Select base commit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCommits.map((commit) => (
+                      <SelectItem key={commit.hash} value={commit.hash}>
+                        <div className="flex flex-col gap-1 py-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
+                            <span className="text-sm">{commit.message.substring(0, 60)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{commit.author}</span>
+                            <span>•</span>
+                            <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{commit.author}</span>
-                          <span>•</span>
-                          <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">To:</label>
+                <Select value={toCommit} onValueChange={setToCommit}>
+                  <SelectTrigger className="w-[400px]">
+                    <SelectValue placeholder="Select target commit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCommits.map((commit) => (
+                      <SelectItem key={commit.hash} value={commit.hash}>
+                        <div className="flex flex-col gap-1 py-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
+                            <span className="text-sm">{commit.message.substring(0, 60)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{commit.author}</span>
+                            <span>•</span>
+                            <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant={hasActiveFilters ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowCommitFilter(!showCommitFilter)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filter {hasActiveFilters && `(${Object.values(commitFilter).filter(v => v !== '').length})`}
+                </Button>
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground">To:</label>
-              <Select value={toCommit} onValueChange={setToCommit}>
-                <SelectTrigger className="w-[400px]">
-                  <SelectValue placeholder="Select target commit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {commits.map((commit) => (
-                    <SelectItem key={commit.hash} value={commit.hash}>
-                      <div className="flex flex-col gap-1 py-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs">{commit.hash.substring(0, 7)}</span>
-                          <span className="text-sm">{commit.message.substring(0, 60)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{commit.author}</span>
-                          <span>•</span>
-                          <span>{new Date(commit.date).toLocaleDateString()} {new Date(commit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            {showCommitFilter && (
+              <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Hash</label>
+                    <Input
+                      placeholder="Partial hash..."
+                      value={commitFilter.hash}
+                      onChange={(e) => setCommitFilter(prev => ({ ...prev, hash: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Commit Message</label>
+                    <Input
+                      placeholder="Search in message..."
+                      value={commitFilter.message}
+                      onChange={(e) => setCommitFilter(prev => ({ ...prev, message: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Author</label>
+                    <Input
+                      placeholder="Author name..."
+                      value={commitFilter.author}
+                      onChange={(e) => setCommitFilter(prev => ({ ...prev, author: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">From Date</label>
+                    <Input
+                      type="date"
+                      value={commitFilter.dateFrom}
+                      onChange={(e) => setCommitFilter(prev => ({ ...prev, dateFrom: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">To Date</label>
+                    <Input
+                      type="date"
+                      value={commitFilter.dateTo}
+                      onChange={(e) => setCommitFilter(prev => ({ ...prev, dateTo: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <div className="text-sm text-muted-foreground">
+                      {filteredCommits.length} of {commits.length} commits
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </header>
       
