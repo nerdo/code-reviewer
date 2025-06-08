@@ -5,14 +5,14 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { SettingsDialog } from './components/settings-dialog';
 import { api } from './services/api';
 import { FileNode } from './domain/entities/FileNode';
 import { FileDiff } from './domain/entities/FileDiff';
 import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
-import { GitBranch, RefreshCw } from 'lucide-react';
+import { GitBranch, RefreshCw, Settings } from 'lucide-react';
 import { cn } from './lib/utils';
-import { ModeToggle } from './components/mode-toggle';
 
 function App() {
   const [repoPath, setRepoPath] = useState<string>('./test-repo');
@@ -26,6 +26,7 @@ function App() {
   const [viewMode, setViewMode] = useState<'side-by-side' | 'inline'>('side-by-side');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadRepository();
@@ -140,7 +141,14 @@ function App() {
                 Branch: {repository.currentBranch}
               </span>
             )}
-            <ModeToggle />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowSettings(true)}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Settings</span>
+            </Button>
           </div>
         </div>
         
@@ -230,6 +238,8 @@ function App() {
           )}
         </main>
       </div>
+
+      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </div>
   );
 }

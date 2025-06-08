@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { FileDiff, DiffLine } from '@/domain/entities/FileDiff';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
+import { useSettings } from './settings-provider';
 
 interface DiffViewerProps {
   diff: FileDiff;
@@ -32,6 +33,7 @@ export function DiffViewer({ diff, viewMode }: DiffViewerProps) {
 }
 
 function UnchangedFileView({ diff }: { diff: FileDiff }) {
+  const { settings } = useSettings();
   const lines = diff.newContent.split('\n');
 
   return (
@@ -40,7 +42,7 @@ function UnchangedFileView({ diff }: { diff: FileDiff }) {
         No changes between commits
       </div>
       <ScrollArea className="h-[calc(100%-40px)]">
-        <div className="font-mono text-sm">
+        <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
           {lines.map((line, index) => (
             <div key={index} className="flex">
               <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
@@ -58,9 +60,11 @@ function UnchangedFileView({ diff }: { diff: FileDiff }) {
 }
 
 function InlineDiffView({ diff }: { diff: FileDiff }) {
+  const { settings } = useSettings();
+
   return (
     <ScrollArea className="h-full">
-      <div className="font-mono text-sm">
+      <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
         {diff.hunks.map((hunk, hunkIndex) => (
           <div key={hunkIndex} className="border-b last:border-b-0">
             <div className="bg-muted px-4 py-2 text-muted-foreground">
@@ -94,6 +98,7 @@ function InlineDiffView({ diff }: { diff: FileDiff }) {
 }
 
 function SideBySideDiffView({ diff }: { diff: FileDiff }) {
+  const { settings } = useSettings();
   const leftScrollRef = useRef<HTMLDivElement>(null);
   const rightScrollRef = useRef<HTMLDivElement>(null);
 
@@ -191,7 +196,7 @@ function SideBySideDiffView({ diff }: { diff: FileDiff }) {
           className="h-[calc(100%-40px)] overflow-auto"
           onScroll={handleScroll('left')}
         >
-          <div>
+          <div style={{ lineHeight: settings.lineHeight }}>
             {processedLines.map((linePair, index) => (
               <div key={index}>
                 {renderLine(linePair.old, linePair.old?.oldLineNumber, 'old')}
@@ -209,7 +214,7 @@ function SideBySideDiffView({ diff }: { diff: FileDiff }) {
           className="h-[calc(100%-40px)] overflow-auto"
           onScroll={handleScroll('right')}
         >
-          <div>
+          <div style={{ lineHeight: settings.lineHeight }}>
             {processedLines.map((linePair, index) => (
               <div key={index}>
                 {renderLine(linePair.new, linePair.new?.newLineNumber, 'new')}
