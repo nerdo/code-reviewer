@@ -78,11 +78,19 @@ describe('DiffViewer', () => {
     
     render(<DiffViewer diff={unchangedDiff} viewMode="side-by-side" />);
     
-    expect(screen.getByText('No changes between commits')).toBeInTheDocument();
+    expect(screen.getByText('unchanged.ts')).toBeInTheDocument();
     expect(screen.getByText('const x = 1;')).toBeInTheDocument();
     expect(screen.getByText('const y = 2;')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument(); // Line number
     expect(screen.getByText('2')).toBeInTheDocument(); // Line number
+  });
+
+  it('should show filename with arrow notation for renamed files in inline view', () => {
+    const renamedDiff = makeTestRenamedFileDiff();
+    
+    render(<DiffViewer diff={renamedDiff} viewMode="inline" />);
+    
+    expect(screen.getByText('old-test.ts → new-test.ts')).toBeInTheDocument();
   });
 
   function makeTestDiff(overrides: Partial<{ isBinary: boolean }> = {}): FileDiff {

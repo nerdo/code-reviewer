@@ -125,6 +125,16 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
   const { settings } = useSettings();
   const lines = diff.newContent.split('\n');
   const [dragIsRemoving, setDragIsRemoving] = useState(false);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to get filename display text
+  const getFilenameDisplay = (diff: FileDiff): string => {
+    if (!diff.previousPath || diff.previousPath === diff.path) {
+      return diff.path;
+    }
+    return `${diff.previousPath} → ${diff.path}`;
+  };
 
   const handleStart = (lineId: string) => {
     if (!highlighterEnabled) return;
@@ -222,63 +232,69 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
   };
 
   return (
-    <div className="h-full flex flex-col min-h-0">
-      <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b shrink-0">
-        No changes between commits
+    <ScrollArea className="h-full">
+      <div className="bg-muted px-4 py-2 font-semibold border-b">
+        {getFilenameDisplay(diff)}
       </div>
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
-          {lines.map((line, index) => {
-            const lineId = `unchanged-${index + 1}`;
-            const isHighlighted = highlightedLines.has(lineId);
-            const isHovered = hoveredLine === lineId;
-            
-            return (
-              <div 
-                key={index} 
-                className={cn(
-                  "flex whitespace-pre",
-                  highlighterEnabled && "cursor-pointer select-none",
-                  getHighlightClass(lineId, index),
-                  isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
-                )}
-                onMouseDown={() => handleStart(lineId)}
-                onMouseEnter={() => handleMove(lineId)}
-                onMouseUp={handleEnd}
-                onMouseLeave={() => handleLineHover(null)}
-                onTouchStart={() => handleStart(lineId)}
-                onTouchMove={(e) => {
-                  e.preventDefault();
-                  const touch = e.touches[0];
-                  const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                  const touchLineId = element?.getAttribute('data-line-id');
-                  if (touchLineId) handleMove(touchLineId);
-                }}
-                onTouchEnd={handleEnd}
-                onClick={() => handleLineClick(lineId)}
-                data-line-id={lineId}
-              >
-                {/* Fixed line numbers that don't scroll horizontally */}
-                <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
-                  {index + 1}
-                </div>
-                {/* Content that scrolls horizontally */}
-                <div className="px-4 py-0.5 flex-1">
-                  {expandTabs(line, settings.tabSize)}
-                </div>
+      <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
+        {lines.map((line, index) => {
+          const lineId = `unchanged-${index + 1}`;
+          const isHighlighted = highlightedLines.has(lineId);
+          const isHovered = hoveredLine === lineId;
+          
+          return (
+            <div 
+              key={index} 
+              className={cn(
+                "flex whitespace-pre",
+                highlighterEnabled && "cursor-pointer select-none",
+                getHighlightClass(lineId, index),
+                isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+              )}
+              onMouseDown={() => handleStart(lineId)}
+              onMouseEnter={() => handleMove(lineId)}
+              onMouseUp={handleEnd}
+              onMouseLeave={() => handleLineHover(null)}
+              onTouchStart={() => handleStart(lineId)}
+              onTouchMove={(e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                const touchLineId = element?.getAttribute('data-line-id');
+                if (touchLineId) handleMove(touchLineId);
+              }}
+              onTouchEnd={handleEnd}
+              onClick={() => handleLineClick(lineId)}
+              data-line-id={lineId}
+            >
+              {/* Fixed line numbers that don't scroll horizontally */}
+              <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                {index + 1}
               </div>
-            );
-          })}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-    </div>
+              {/* Content that scrolls horizontally */}
+              <div className="px-4 py-0.5 flex-1">
+                {expandTabs(line, settings.tabSize)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
 
 function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlightedLines, hoveredLine, setHoveredLine, isDragging, setIsDragging, dragStart, setDragStart }: { diff: FileDiff } & HighlighterProps) {
   const { settings } = useSettings();
   const [dragIsRemoving, setDragIsRemoving] = useState(false);
+
+  // Helper function to get filename display text
+  const getFilenameDisplay = (diff: FileDiff): string => {
+    if (!diff.previousPath || diff.previousPath === diff.path) {
+      return diff.path;
+    }
+    return `${diff.previousPath} → ${diff.path}`;
+  };
 
   // Create array of all line IDs for drag selection
   const allLineIds: string[] = [];
@@ -384,6 +400,9 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
 
   return (
     <ScrollArea className="h-full min-h-0">
+      <div className="bg-muted px-4 py-2 font-semibold border-b">
+        {getFilenameDisplay(diff)}
+      </div>
       <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
         {diff.hunks.map((hunk, hunkIndex) => (
           <div key={hunkIndex} className="border-b last:border-b-0">
