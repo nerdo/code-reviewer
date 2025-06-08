@@ -1,14 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { DiffService } from '../DiffService';
 
 describe('DiffService', () => {
-  let diffService: DiffService;
-
-  beforeEach(() => {
-    diffService = new DiffService();
-  });
-
   it('should generate diff for added lines', () => {
+    const diffService = new DiffService();
     const oldContent = 'line1\nline2';
     const newContent = 'line1\nline2\nline3';
     
@@ -21,6 +16,7 @@ describe('DiffService', () => {
   });
 
   it('should generate diff for deleted lines', () => {
+    const diffService = new DiffService();
     const oldContent = 'line1\nline2\nline3';
     const newContent = 'line1\nline3';
     
@@ -33,6 +29,7 @@ describe('DiffService', () => {
   });
 
   it('should generate diff for modified lines', () => {
+    const diffService = new DiffService();
     const oldContent = 'line1\nline2\nline3';
     const newContent = 'line1\nmodified line2\nline3';
     
@@ -45,6 +42,8 @@ describe('DiffService', () => {
   });
 
   it('should handle empty files', () => {
+    const diffService = new DiffService();
+    
     const hunks = diffService.generateDiff('', 'new content');
     
     expect(hunks).toHaveLength(1);
@@ -53,6 +52,15 @@ describe('DiffService', () => {
   });
 
   it('should generate multiple hunks for separated changes', () => {
+    const diffService = new DiffService();
+    const { oldContent, newContent } = makeTestLargeFileWithSeparatedChanges();
+    
+    const hunks = diffService.generateDiff(oldContent, newContent);
+    
+    expect(hunks.length).toBeGreaterThanOrEqual(2);
+  });
+
+  function makeTestLargeFileWithSeparatedChanges() {
     const oldContent = Array.from({ length: 20 }, (_, i) => `line${i + 1}`).join('\n');
     const newContent = oldContent
       .split('\n')
@@ -63,8 +71,6 @@ describe('DiffService', () => {
       })
       .join('\n');
     
-    const hunks = diffService.generateDiff(oldContent, newContent);
-    
-    expect(hunks.length).toBeGreaterThanOrEqual(2);
-  });
+    return { oldContent, newContent };
+  }
 });

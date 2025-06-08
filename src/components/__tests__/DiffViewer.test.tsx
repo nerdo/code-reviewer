@@ -5,30 +5,8 @@ import { DiffViewer } from '../DiffViewer';
 import { FileDiff } from '@/domain/entities/FileDiff';
 
 describe('DiffViewer', () => {
-  const createTestDiff = (isBinary = false): FileDiff => ({
-    path: 'test.ts',
-    oldContent: 'line1\nline2\nline3',
-    newContent: 'line1\nmodified line2\nline3\nline4',
-    isBinary,
-    hunks: isBinary ? [] : [
-      {
-        oldStart: 2,
-        oldLines: 1,
-        newStart: 2,
-        newLines: 2,
-        lines: [
-          { type: 'normal', content: 'line1', oldLineNumber: 1, newLineNumber: 1 },
-          { type: 'delete', content: 'line2', oldLineNumber: 2 },
-          { type: 'add', content: 'modified line2', newLineNumber: 2 },
-          { type: 'normal', content: 'line3', oldLineNumber: 3, newLineNumber: 3 },
-          { type: 'add', content: 'line4', newLineNumber: 4 }
-        ]
-      }
-    ]
-  });
-
   it('should show binary file message for binary files', () => {
-    const binaryDiff = createTestDiff(true);
+    const binaryDiff = makeTestDiff({ isBinary: true });
     
     render(<DiffViewer diff={binaryDiff} viewMode="inline" />);
     
@@ -36,7 +14,7 @@ describe('DiffViewer', () => {
   });
 
   it('should render inline diff view', () => {
-    const diff = createTestDiff();
+    const diff = makeTestDiff();
     
     render(<DiffViewer diff={diff} viewMode="inline" />);
     
@@ -54,7 +32,7 @@ describe('DiffViewer', () => {
   });
 
   it('should apply correct styling for added lines in inline view', () => {
-    const diff = createTestDiff();
+    const diff = makeTestDiff();
     
     render(<DiffViewer diff={diff} viewMode="inline" />);
     
@@ -63,7 +41,7 @@ describe('DiffViewer', () => {
   });
 
   it('should apply correct styling for deleted lines in inline view', () => {
-    const diff = createTestDiff();
+    const diff = makeTestDiff();
     
     render(<DiffViewer diff={diff} viewMode="inline" />);
     
@@ -72,7 +50,7 @@ describe('DiffViewer', () => {
   });
 
   it('should render side-by-side diff view', () => {
-    const diff = createTestDiff();
+    const diff = makeTestDiff();
     
     render(<DiffViewer diff={diff} viewMode="side-by-side" />);
     
@@ -85,11 +63,7 @@ describe('DiffViewer', () => {
   });
 
   it('should handle renamed files in side-by-side view', () => {
-    const diff: FileDiff = {
-      ...createTestDiff(),
-      path: 'new-test.ts',
-      previousPath: 'old-test.ts'
-    };
+    const diff = makeTestRenamedFileDiff();
     
     render(<DiffViewer diff={diff} viewMode="side-by-side" />);
     
@@ -98,13 +72,7 @@ describe('DiffViewer', () => {
   });
 
   it('should show unchanged file view for files with no changes', () => {
-    const unchangedDiff: FileDiff = {
-      path: 'unchanged.ts',
-      oldContent: 'const x = 1;\nconst y = 2;',
-      newContent: 'const x = 1;\nconst y = 2;',
-      hunks: [],
-      isBinary: false
-    };
+    const unchangedDiff = makeTestUnchangedFileDiff();
     
     render(<DiffViewer diff={unchangedDiff} viewMode="side-by-side" />);
     
@@ -114,4 +82,48 @@ describe('DiffViewer', () => {
     expect(screen.getByText('1')).toBeInTheDocument(); // Line number
     expect(screen.getByText('2')).toBeInTheDocument(); // Line number
   });
+
+  function makeTestDiff(overrides: Partial<{ isBinary: boolean }> = {}): FileDiff {
+    const { isBinary = false } = overrides;
+    
+    return {
+      path: 'test.ts',
+      oldContent: 'line1\nline2\nline3',
+      newContent: 'line1\nmodified line2\nline3\nline4',
+      isBinary,
+      hunks: isBinary ? [] : [
+        {
+          oldStart: 2,
+          oldLines: 1,
+          newStart: 2,
+          newLines: 2,
+          lines: [
+            { type: 'normal', content: 'line1', oldLineNumber: 1, newLineNumber: 1 },
+            { type: 'delete', content: 'line2', oldLineNumber: 2 },
+            { type: 'add', content: 'modified line2', newLineNumber: 2 },
+            { type: 'normal', content: 'line3', oldLineNumber: 3, newLineNumber: 3 },
+            { type: 'add', content: 'line4', newLineNumber: 4 }
+          ]
+        }
+      ]
+    };
+  }
+
+  function makeTestRenamedFileDiff(): FileDiff {
+    return {
+      ...makeTestDiff(),
+      path: 'new-test.ts',
+      previousPath: 'old-test.ts'
+    };
+  }
+
+  function makeTestUnchangedFileDiff(): FileDiff {
+    return {
+      path: 'unchanged.ts',
+      oldContent: 'const x = 1;\nconst y = 2;',
+      newContent: 'const x = 1;\nconst y = 2;',
+      hunks: [],
+      isBinary: false
+    };
+  }
 });

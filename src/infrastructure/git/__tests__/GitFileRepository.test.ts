@@ -1,26 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { GitFileRepository } from '../GitFileRepository';
 import simpleGit from 'simple-git';
 
 vi.mock('simple-git');
 
 describe('GitFileRepository', () => {
-  let gitFileRepository: GitFileRepository;
-  let mockGit: Record<string, ReturnType<typeof vi.fn>>;
-
-  beforeEach(() => {
-    mockGit = {
-      raw: vi.fn(),
-      diffSummary: vi.fn(),
-      show: vi.fn()
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (simpleGit as any).mockReturnValue(mockGit);
-    gitFileRepository = new GitFileRepository();
-  });
-
   describe('getFileTree', () => {
     it('should build file tree from git ls-tree output', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.raw.mockResolvedValue('src/index.ts\nsrc/utils.ts\nREADME.md\n');
 
       const tree = await gitFileRepository.getFileTree('/repo', 'abc123');
@@ -35,6 +22,7 @@ describe('GitFileRepository', () => {
     });
 
     it('should handle empty repository', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.raw.mockResolvedValue('');
 
       const tree = await gitFileRepository.getFileTree('/repo', 'abc123');
@@ -45,14 +33,9 @@ describe('GitFileRepository', () => {
 
   describe('getFileChanges', () => {
     it('should map diff summary to file changes', async () => {
-      mockGit.diffSummary.mockResolvedValue({
-        files: [
-          { file: 'src/index.ts', insertions: 10, deletions: 5, changes: 15 },
-          { file: 'new.ts', insertions: 20, deletions: 0, changes: 20 },
-          { file: 'deleted.ts', insertions: 0, deletions: 30, changes: 30 },
-          { file: 'old.ts => new.ts', insertions: 5, deletions: 3, changes: 8 }
-        ]
-      });
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
+      const diffSummary = makeTestDiffSummary();
+      mockGit.diffSummary.mockResolvedValue(diffSummary);
 
       const changes = await gitFileRepository.getFileChanges('/repo', 'abc123', 'def456');
 
@@ -67,6 +50,7 @@ describe('GitFileRepository', () => {
 
   describe('getFileDiff', () => {
     it('should get diff with content for text files', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.show.mockImplementation((args: string[]) => {
         if (args[0] === 'abc123:test.ts') return Promise.resolve('old content');
         if (args[0] === 'def456:test.ts') return Promise.resolve('new content');
@@ -84,6 +68,7 @@ describe('GitFileRepository', () => {
     });
 
     it('should handle binary files', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.show.mockImplementation((args: string[]) => {
         if (args[0] === 'abc123:image.png') return Promise.resolve('binary content old');
         if (args[0] === 'def456:image.png') return Promise.resolve('binary content new');
@@ -98,6 +83,7 @@ describe('GitFileRepository', () => {
     });
 
     it('should handle deleted files', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.show.mockImplementation((args: string[]) => {
         if (args[0] === 'abc123:deleted.ts') return Promise.resolve('content');
         return Promise.reject(new Error('File not found'));
@@ -111,6 +97,7 @@ describe('GitFileRepository', () => {
     });
 
     it('should handle unchanged files', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       const sameContent = 'unchanged content';
       mockGit.show.mockResolvedValue(sameContent);
       mockGit.raw.mockResolvedValue('0\t0\tunchanged.ts');
@@ -126,6 +113,7 @@ describe('GitFileRepository', () => {
 
   describe('getFileContent', () => {
     it('should get file content at specific commit', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.show.mockResolvedValue('file content');
 
       const content = await gitFileRepository.getFileContent('/repo', 'abc123', 'test.ts');
@@ -135,6 +123,7 @@ describe('GitFileRepository', () => {
     });
 
     it('should throw error for non-existent file', async () => {
+      const { gitFileRepository, mockGit } = makeTestGitFileRepository();
       mockGit.show.mockRejectedValue(new Error('pathspec'));
 
       await expect(
@@ -142,4 +131,28 @@ describe('GitFileRepository', () => {
       ).rejects.toThrow('File nonexistent.ts not found in commit abc123');
     });
   });
+
+  function makeTestGitFileRepository() {
+    const mockGit = {
+      raw: vi.fn(),
+      diffSummary: vi.fn(),
+      show: vi.fn()
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (simpleGit as any).mockReturnValue(mockGit);
+    const gitFileRepository = new GitFileRepository();
+    
+    return { gitFileRepository, mockGit };
+  }
+
+  function makeTestDiffSummary() {
+    return {
+      files: [
+        { file: 'src/index.ts', insertions: 10, deletions: 5, changes: 15 },
+        { file: 'new.ts', insertions: 20, deletions: 0, changes: 20 },
+        { file: 'deleted.ts', insertions: 0, deletions: 30, changes: 30 },
+        { file: 'old.ts => new.ts', insertions: 5, deletions: 3, changes: 8 }
+      ]
+    };
+  }
 });

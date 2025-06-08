@@ -1,17 +1,45 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { FileTreeService } from '../FileTreeService';
 import { FileNode } from '../../entities/FileNode';
 import { FileChange, FileChangeType } from '../../entities/FileChange';
 
 describe('FileTreeService', () => {
-  let fileTreeService: FileTreeService;
+  it('should build file tree with changes', () => {
+    const fileTreeService = new FileTreeService();
+    const baseTree = makeTestBaseTree();
+    const changes = makeTestFileChanges();
 
-  beforeEach(() => {
-    fileTreeService = new FileTreeService();
+    const result = fileTreeService.buildFileTreeWithChanges(baseTree, changes);
+
+    expect(result.children![0].children![0].change).toBeDefined();
+    expect(result.children![0].children![0].change?.changeType).toBe(FileChangeType.Modified);
   });
 
-  it('should build file tree with changes', () => {
-    const baseTree: FileNode = {
+  it('should sort file tree with directories first', () => {
+    const fileTreeService = new FileTreeService();
+    const unsortedTree = makeTestUnsortedTree();
+
+    const sorted = fileTreeService.sortFileTree(unsortedTree);
+
+    expect(sorted.children![0].name).toBe('a-dir');
+    expect(sorted.children![1].name).toBe('c-dir');
+    expect(sorted.children![2].name).toBe('a-file.txt');
+    expect(sorted.children![3].name).toBe('b-file.txt');
+  });
+
+  it('should recursively sort nested directories', () => {
+    const fileTreeService = new FileTreeService();
+    const nestedTree = makeTestNestedTree();
+
+    const sorted = fileTreeService.sortFileTree(nestedTree);
+
+    expect(sorted.children![0].children![0].name).toBe('components');
+    expect(sorted.children![0].children![1].name).toBe('a.ts');
+    expect(sorted.children![0].children![2].name).toBe('z.ts');
+  });
+
+  function makeTestBaseTree(): FileNode {
+    return {
       name: '/',
       path: '/',
       type: 'directory',
@@ -28,8 +56,10 @@ describe('FileTreeService', () => {
         { name: 'README.md', path: 'README.md', type: 'file' }
       ]
     };
+  }
 
-    const changes: FileChange[] = [
+  function makeTestFileChanges(): FileChange[] {
+    return [
       {
         path: 'src/index.ts',
         changeType: FileChangeType.Modified,
@@ -43,15 +73,10 @@ describe('FileTreeService', () => {
         deletions: 0
       }
     ];
+  }
 
-    const result = fileTreeService.buildFileTreeWithChanges(baseTree, changes);
-
-    expect(result.children![0].children![0].change).toBeDefined();
-    expect(result.children![0].children![0].change?.changeType).toBe(FileChangeType.Modified);
-  });
-
-  it('should sort file tree with directories first', () => {
-    const unsortedTree: FileNode = {
+  function makeTestUnsortedTree(): FileNode {
+    return {
       name: '/',
       path: '/',
       type: 'directory',
@@ -62,17 +87,10 @@ describe('FileTreeService', () => {
         { name: 'c-dir', path: 'c-dir', type: 'directory', children: [] }
       ]
     };
+  }
 
-    const sorted = fileTreeService.sortFileTree(unsortedTree);
-
-    expect(sorted.children![0].name).toBe('a-dir');
-    expect(sorted.children![1].name).toBe('c-dir');
-    expect(sorted.children![2].name).toBe('a-file.txt');
-    expect(sorted.children![3].name).toBe('b-file.txt');
-  });
-
-  it('should recursively sort nested directories', () => {
-    const nestedTree: FileNode = {
+  function makeTestNestedTree(): FileNode {
+    return {
       name: '/',
       path: '/',
       type: 'directory',
@@ -89,11 +107,5 @@ describe('FileTreeService', () => {
         }
       ]
     };
-
-    const sorted = fileTreeService.sortFileTree(nestedTree);
-
-    expect(sorted.children![0].children![0].name).toBe('components');
-    expect(sorted.children![0].children![1].name).toBe('a.ts');
-    expect(sorted.children![0].children![2].name).toBe('z.ts');
-  });
+  }
 });

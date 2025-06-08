@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FileBrowser } from '../FileBrowser';
@@ -6,55 +6,10 @@ import { FileNode } from '@/domain/entities/FileNode';
 import { FileChangeType } from '@/domain/entities/FileChange';
 
 describe('FileBrowser', () => {
-  const mockOnFileSelect = vi.fn();
-
-  const fileTree: FileNode = {
-    name: '/',
-    path: '/',
-    type: 'directory',
-    children: [
-      {
-        name: 'src',
-        path: 'src',
-        type: 'directory',
-        children: [
-          {
-            name: 'index.ts',
-            path: 'src/index.ts',
-            type: 'file',
-            change: {
-              path: 'src/index.ts',
-              changeType: FileChangeType.Modified,
-              additions: 10,
-              deletions: 5
-            }
-          },
-          {
-            name: 'new.ts',
-            path: 'src/new.ts',
-            type: 'file',
-            change: {
-              path: 'src/new.ts',
-              changeType: FileChangeType.Added,
-              additions: 20,
-              deletions: 0
-            }
-          }
-        ]
-      },
-      {
-        name: 'README.md',
-        path: 'README.md',
-        type: 'file'
-      }
-    ]
-  };
-
-  beforeEach(() => {
-    mockOnFileSelect.mockClear();
-  });
-
   it('should render file tree', () => {
+    const mockOnFileSelect = vi.fn();
+    const fileTree = makeTestFileTree();
+
     render(
       <FileBrowser
         fileTree={fileTree}
@@ -67,6 +22,9 @@ describe('FileBrowser', () => {
   });
 
   it('should expand and collapse directories', () => {
+    const mockOnFileSelect = vi.fn();
+    const fileTree = makeTestFileTree();
+
     render(
       <FileBrowser
         fileTree={fileTree}
@@ -89,6 +47,9 @@ describe('FileBrowser', () => {
   });
 
   it('should call onFileSelect when clicking a file', () => {
+    const mockOnFileSelect = vi.fn();
+    const fileTree = makeTestFileTree();
+
     render(
       <FileBrowser
         fileTree={fileTree}
@@ -103,6 +64,9 @@ describe('FileBrowser', () => {
   });
 
   it('should highlight selected file', () => {
+    const mockOnFileSelect = vi.fn();
+    const fileTree = makeTestFileTree();
+
     const { rerender } = render(
       <FileBrowser
         fileTree={fileTree}
@@ -130,6 +94,9 @@ describe('FileBrowser', () => {
   });
 
   it('should show change indicators for modified files', () => {
+    const mockOnFileSelect = vi.fn();
+    const fileTree = makeTestFileTree();
+
     render(
       <FileBrowser
         fileTree={fileTree}
@@ -146,4 +113,48 @@ describe('FileBrowser', () => {
     const addedFile = screen.getByText('new.ts').parentElement;
     expect(addedFile?.querySelector('.text-green-500')).toBeInTheDocument();
   });
+
+  function makeTestFileTree(): FileNode {
+    return {
+      name: '/',
+      path: '/',
+      type: 'directory',
+      children: [
+        {
+          name: 'src',
+          path: 'src',
+          type: 'directory',
+          children: [
+            {
+              name: 'index.ts',
+              path: 'src/index.ts',
+              type: 'file',
+              change: {
+                path: 'src/index.ts',
+                changeType: FileChangeType.Modified,
+                additions: 10,
+                deletions: 5
+              }
+            },
+            {
+              name: 'new.ts',
+              path: 'src/new.ts',
+              type: 'file',
+              change: {
+                path: 'src/new.ts',
+                changeType: FileChangeType.Added,
+                additions: 20,
+                deletions: 0
+              }
+            }
+          ]
+        },
+        {
+          name: 'README.md',
+          path: 'README.md',
+          type: 'file'
+        }
+      ]
+    };
+  }
 });
