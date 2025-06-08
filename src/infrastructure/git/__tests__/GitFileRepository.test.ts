@@ -1,19 +1,21 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GitFileRepository } from '../GitFileRepository';
 import simpleGit from 'simple-git';
 
-jest.mock('simple-git');
+vi.mock('simple-git');
 
 describe('GitFileRepository', () => {
   let gitFileRepository: GitFileRepository;
-  let mockGit: Record<string, jest.Mock>;
+  let mockGit: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(() => {
     mockGit = {
-      raw: jest.fn(),
-      diffSummary: jest.fn(),
-      show: jest.fn()
+      raw: vi.fn(),
+      diffSummary: vi.fn(),
+      show: vi.fn()
     };
-    (simpleGit as jest.Mock).mockReturnValue(mockGit);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (simpleGit as any).mockReturnValue(mockGit);
     gitFileRepository = new GitFileRepository();
   });
 

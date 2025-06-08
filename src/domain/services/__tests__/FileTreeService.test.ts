@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { FileTreeService } from '../FileTreeService';
 import { FileNode } from '../../entities/FileNode';
 import { FileChange, FileChangeType } from '../../entities/FileChange';

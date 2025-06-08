@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FileBrowser } from '../FileBrowser';
@@ -5,7 +6,7 @@ import { FileNode } from '@/domain/entities/FileNode';
 import { FileChangeType } from '@/domain/entities/FileChange';
 
 describe('FileBrowser', () => {
-  const mockOnFileSelect = jest.fn();
+  const mockOnFileSelect = vi.fn();
 
   const fileTree: FileNode = {
     name: '/',
