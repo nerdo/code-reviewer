@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileNode } from '@/domain/entities/FileNode';
 import { FileChangeType } from '@/domain/entities/FileChange';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Minus, Edit, MoveRight } from 'lucide-react';
@@ -26,6 +26,57 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
     });
   };
 
+  // Check if a directory has any changes in its subtree
+  const hasChangesInSubtree = (node: FileNode): boolean => {
+    // If this node itself has changes, return true
+    if (node.change) {
+      return true;
+    }
+    
+    // If this is a file without changes, return false
+    if (node.type === 'file') {
+      return false;
+    }
+    
+    // For directories, check all children recursively
+    if (node.children) {
+      return node.children.some(child => hasChangesInSubtree(child));
+    }
+    
+    return false;
+  };
+
+  // Auto-expand directories that contain changes
+  useEffect(() => {
+    const pathsWithChanges = new Set<string>(['/']);
+    
+    const collectPathsWithChanges = (node: FileNode, currentPath: string = '') => {
+      const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name;
+      
+      if (hasChangesInSubtree(node)) {
+        pathsWithChanges.add(fullPath);
+        
+        // Also add parent paths
+        let parentPath = '';
+        const parts = fullPath.split('/').filter(Boolean);
+        for (let i = 0; i < parts.length - 1; i++) {
+          parentPath = parentPath ? `${parentPath}/${parts[i]}` : parts[i];
+          pathsWithChanges.add(parentPath);
+        }
+      }
+      
+      if (node.children) {
+        node.children.forEach(child => collectPathsWithChanges(child, fullPath));
+      }
+    };
+    
+    if (fileTree.children) {
+      fileTree.children.forEach(child => collectPathsWithChanges(child));
+    }
+    
+    setExpandedDirs(pathsWithChanges);
+  }, [fileTree, hasChangesInSubtree]);
+
   const getChangeIcon = (changeType: FileChangeType) => {
     switch (changeType) {
       case FileChangeType.Added:
@@ -46,6 +97,7 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
     const isExpanded = expandedDirs.has(node.path);
     const isSelected = selectedFile === node.path;
     const paddingLeft = depth * 16 + 8;
+    const hasNestedChanges = hasChangesInSubtree(node);
 
     if (node.type === 'file') {
       return (
@@ -53,13 +105,20 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
           key={node.path}
           className={cn(
             "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent",
-            isSelected && "bg-accent"
+            isSelected && "bg-accent",
+            node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400"
           )}
           style={{ paddingLeft }}
           onClick={() => onFileSelect(node.path)}
         >
-          <File className="h-4 w-4 shrink-0" />
-          <span className="text-sm truncate">{node.name}</span>
+          <File className={cn(
+            "h-4 w-4 shrink-0",
+            node.change && "text-blue-600 dark:text-blue-400"
+          )} />
+          <span className={cn(
+            "text-sm truncate",
+            node.change && "font-medium text-blue-700 dark:text-blue-300"
+          )}>{node.name}</span>
           {node.change && getChangeIcon(node.change.changeType)}
         </div>
       );
@@ -68,7 +127,11 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
     return (
       <div key={node.path}>
         <div
-          className="flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent"
+          className={cn(
+            "flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-accent",
+            node.change && "bg-blue-50 dark:bg-blue-950/30 border-l-2 border-l-blue-400",
+            !node.change && hasNestedChanges && "bg-orange-50/50 dark:bg-orange-950/20 border-l-2 border-l-orange-300 dark:border-l-orange-600"
+          )}
           style={{ paddingLeft }}
           onClick={() => toggleDir(node.path)}
         >
@@ -78,12 +141,29 @@ export function FileBrowser({ fileTree, selectedFile, onFileSelect }: FileBrowse
             <ChevronRight className="h-4 w-4 shrink-0" />
           )}
           {isExpanded ? (
-            <FolderOpen className="h-4 w-4 shrink-0" />
+            <FolderOpen className={cn(
+              "h-4 w-4 shrink-0",
+              node.change && "text-blue-600 dark:text-blue-400",
+              !node.change && hasNestedChanges && "text-orange-600 dark:text-orange-400"
+            )} />
           ) : (
-            <Folder className="h-4 w-4 shrink-0" />
+            <Folder className={cn(
+              "h-4 w-4 shrink-0",
+              node.change && "text-blue-600 dark:text-blue-400",
+              !node.change && hasNestedChanges && "text-orange-600 dark:text-orange-400"
+            )} />
           )}
-          <span className="text-sm truncate">{node.name}</span>
+          <span className={cn(
+            "text-sm truncate",
+            node.change && "font-medium text-blue-700 dark:text-blue-300",
+            !node.change && hasNestedChanges && "font-medium text-orange-700 dark:text-orange-300"
+          )}>{node.name}</span>
           {node.change && getChangeIcon(node.change.changeType)}
+          {!node.change && hasNestedChanges && (
+            <span className="text-xs text-orange-600 dark:text-orange-400 ml-auto">
+              changes
+            </span>
+          )}
         </div>
         {isExpanded && node.children && (
           <div>

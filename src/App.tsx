@@ -11,7 +11,7 @@ import { FileNode } from './domain/entities/FileNode';
 import { FileDiff } from './domain/entities/FileDiff';
 import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
-import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser, Filter, X } from 'lucide-react';
+import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser, Filter, X, GripVertical } from 'lucide-react';
 import { cn } from './lib/utils';
 import { useSettings } from './components/settings-provider';
 
@@ -57,6 +57,55 @@ function App() {
 
   // Check if any filters are active
   const hasActiveFilters = Object.values(commitFilter).some(value => value !== '');
+
+  // Sidebar resizing state
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('code-reviewer-sidebar-width');
+    return saved ? parseInt(saved, 10) : 320; // Default 320px = w-80
+  });
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Save sidebar width to localStorage
+  useEffect(() => {
+    localStorage.setItem('code-reviewer-sidebar-width', sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  // Handle sidebar resize
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const newWidth = e.clientX;
+    // Constrain width between 200px and 600px
+    const constrainedWidth = Math.min(Math.max(newWidth, 200), 600);
+    setSidebarWidth(constrainedWidth);
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  // Add global mouse event listeners for resizing
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResizing]);
 
   // Filter commits based on filter criteria
   const filteredCommits = commits.filter(commit => {
@@ -389,18 +438,36 @@ function App() {
       )}
       
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 border-r">
-          {fileTree ? (
-            <FileBrowser
-              fileTree={fileTree}
-              selectedFile={selectedFile}
-              onFileSelect={handleFileSelect}
-            />
-          ) : (
-            <div className="p-4 text-center text-muted-foreground">
-              {loading ? 'Loading...' : 'Select commits to view changes'}
-            </div>
-          )}
+        <aside 
+          className="border-r relative flex"
+          style={{ width: sidebarWidth }}
+        >
+          <div className="flex-1 overflow-hidden">
+            {fileTree ? (
+              <FileBrowser
+                fileTree={fileTree}
+                selectedFile={selectedFile}
+                onFileSelect={handleFileSelect}
+              />
+            ) : (
+              <div className="p-4 text-center text-muted-foreground">
+                {loading ? 'Loading...' : 'Select commits to view changes'}
+              </div>
+            )}
+          </div>
+          
+          {/* Resize handle */}
+          <div
+            className={cn(
+              "w-1 bg-border hover:bg-accent-foreground/20 cursor-col-resize transition-colors flex items-center justify-center group relative",
+              isResizing && "bg-accent-foreground/20"
+            )}
+            onMouseDown={handleMouseDown}
+          >
+            {/* Wider hover area for easier grabbing */}
+            <div className="absolute inset-y-0 -left-2 -right-2 cursor-col-resize" />
+            <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors relative z-10" />
+          </div>
         </aside>
         
         <main className="flex-1">
