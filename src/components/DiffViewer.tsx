@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { FileDiff, DiffLine } from '@/domain/entities/FileDiff';
-import { cn } from '@/lib/utils';
+import { cn, expandTabs } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
 import { useSettings } from './settings-provider';
 
@@ -262,8 +262,8 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
                 <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
                   {index + 1}
                 </span>
-                <span className="flex-1 px-4 py-0.5">
-                  {line}
+                <span className="flex-1 px-4 py-0.5 whitespace-pre">
+                  {expandTabs(line, settings.tabSize)}
                 </span>
               </div>
             );
@@ -426,8 +426,8 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
                   <span className="w-4 select-none px-2 py-0.5 text-muted-foreground">
                     {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
                   </span>
-                  <span className="flex-1 px-2 py-0.5">
-                    {line.content}
+                  <span className="flex-1 px-2 py-0.5 whitespace-pre">
+                    {expandTabs(line.content, settings.tabSize)}
                   </span>
                 </div>
               );
@@ -698,11 +698,11 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
           {lineNumber}
         </span>
         <span className={cn(
-          "flex-1 px-4 py-0.5",
+          "flex-1 px-4 py-0.5 whitespace-pre",
           isAdd && "text-green-700 dark:text-green-400",
           isDelete && "text-red-700 dark:text-red-400"
         )}>
-          {line.content}
+          {expandTabs(line.content, settings.tabSize)}
         </span>
       </div>
     );

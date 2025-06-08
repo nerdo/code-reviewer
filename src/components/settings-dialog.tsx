@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { ScrollArea } from "./ui/scroll-area"
-import { cn } from "@/lib/utils"
+import { cn, expandTabs } from "@/lib/utils"
 import { useSettings, type Settings } from "./settings-provider"
 import { FileDiff } from "@/domain/entities/FileDiff"
 
@@ -61,12 +61,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         newLines: 2,
         lines: [
           { type: 'normal' as const, content: 'function calculateTotal(items: Item[]) {', oldLineNumber: 1, newLineNumber: 1 },
-          { type: 'delete' as const, content: '  let total = 0;', oldLineNumber: 2 },
-          { type: 'delete' as const, content: '  for (const item of items) {', oldLineNumber: 3 },
-          { type: 'delete' as const, content: '    total += item.price;', oldLineNumber: 4 },
-          { type: 'delete' as const, content: '  }', oldLineNumber: 5 },
-          { type: 'delete' as const, content: '  return total;', oldLineNumber: 6 },
-          { type: 'add' as const, content: '  return items.reduce((total, item) => total + item.price, 0);', newLineNumber: 2 },
+          { type: 'delete' as const, content: '\tlet total = 0;\t// Initialize', oldLineNumber: 2 },
+          { type: 'delete' as const, content: '\tfor (const item of items) {', oldLineNumber: 3 },
+          { type: 'delete' as const, content: '\t\ttotal += item.price;\t// Add price', oldLineNumber: 4 },
+          { type: 'delete' as const, content: '\t}', oldLineNumber: 5 },
+          { type: 'delete' as const, content: '\treturn total;\t// Return sum', oldLineNumber: 6 },
+          { type: 'add' as const, content: '\treturn items.reduce((total, item) => total + item.price, 0);\t// One-liner', newLineNumber: 2 },
           { type: 'normal' as const, content: '}', oldLineNumber: 7, newLineNumber: 3 }
         ]
       }
@@ -98,8 +98,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <span className="w-4 select-none px-2 py-0.5 text-muted-foreground">
                     {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
                   </span>
-                  <span className="flex-1 px-2 py-0.5">
-                    {line.content}
+                  <span className="flex-1 px-2 py-0.5 whitespace-pre">
+                    {expandTabs(line.content, tempSettings.tabSize)}
                   </span>
                 </div>
               ))}
@@ -161,6 +161,24 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Compact (1.0)</span>
                 <span>Spacious (2.5)</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Tab Size: {tempSettings.tabSize} spaces
+              </Label>
+              <Slider
+                value={[tempSettings.tabSize]}
+                onValueChange={([value]) => setTempSettings(prev => ({ ...prev, tabSize: value }))}
+                max={8}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>1 space</span>
+                <span>8 spaces</span>
               </div>
             </div>
           </div>

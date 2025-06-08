@@ -5,6 +5,7 @@ type Theme = "dark" | "light" | "system"
 export type Settings = {
   theme: Theme
   lineHeight: number
+  tabSize: number
 }
 
 type SettingsContextType = {
@@ -14,7 +15,8 @@ type SettingsContextType = {
 
 const defaultSettings: Settings = {
   theme: "system",
-  lineHeight: 1.5
+  lineHeight: 1.5,
+  tabSize: 4
 }
 
 const SettingsContext = createContext<SettingsContextType>({
