@@ -12,6 +12,7 @@ import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
 import { GitBranch, RefreshCw } from 'lucide-react';
 import { cn } from './lib/utils';
+import { ModeToggle } from './components/mode-toggle';
 
 function App() {
   const [repoPath, setRepoPath] = useState<string>('./test-repo');
@@ -133,12 +134,13 @@ function App() {
             Load Repository
           </Button>
           
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             {repository && (
               <span className="text-sm text-muted-foreground">
                 Branch: {repository.currentBranch}
               </span>
             )}
+            <ModeToggle />
           </div>
         </div>
         
