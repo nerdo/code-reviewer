@@ -36,8 +36,9 @@ describe('DiffViewer', () => {
     
     render(<DiffViewer diff={diff} viewMode="inline" />);
     
-    const addedLine = screen.getByText('line4').parentElement;
-    expect(addedLine).toHaveClass('bg-green-500/20');
+    const addedLine = screen.getByText('line4');
+    const lineContainer = addedLine.closest('[data-line-id]');
+    expect(lineContainer).toHaveClass('bg-green-500/20');
   });
 
   it('should apply correct styling for deleted lines in inline view', () => {
@@ -45,8 +46,9 @@ describe('DiffViewer', () => {
     
     render(<DiffViewer diff={diff} viewMode="inline" />);
     
-    const deletedLine = screen.getByText('line2').parentElement;
-    expect(deletedLine).toHaveClass('bg-red-500/20');
+    const deletedLine = screen.getByText('line2');
+    const lineContainer = deletedLine.closest('[data-line-id]');
+    expect(lineContainer).toHaveClass('bg-red-500/20');
   });
 
   it('should render side-by-side diff view', () => {

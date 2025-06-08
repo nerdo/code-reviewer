@@ -470,7 +470,7 @@ function App() {
           </div>
         </aside>
         
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden min-h-0">
           {fileDiff ? (
             (() => {
               const hasNoChanges = fileDiff.hunks.length === 0 && fileDiff.oldContent === fileDiff.newContent;
@@ -511,8 +511,8 @@ function App() {
               }
               
               return (
-                <div className="flex flex-col h-full">
-                  <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')} className="flex flex-col h-full">
+                <div className="flex flex-col h-full min-h-0">
+                  <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')} className="flex flex-col h-full min-h-0">
                     <div className="flex items-center justify-between m-2 shrink-0">
                       <TabsList>
                         <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
@@ -557,7 +557,7 @@ function App() {
                         )}
                       </div>
                     </div>
-                    <TabsContent value={viewMode} className="flex-1 m-0">
+                    <TabsContent value={viewMode} className="flex-1 m-0 min-h-0">
                       <DiffViewer 
                         diff={fileDiff} 
                         viewMode={viewMode} 

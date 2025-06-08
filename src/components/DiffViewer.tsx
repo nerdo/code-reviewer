@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { FileDiff, DiffLine } from '@/domain/entities/FileDiff';
 import { cn, expandTabs } from '@/lib/utils';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useSettings } from './settings-provider';
 
 interface DiffViewerProps {
@@ -222,12 +222,12 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-h-0">
       <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b shrink-0">
         No changes between commits
       </div>
-      <ScrollArea className="flex-1 w-full">
-        <div className="font-mono text-sm w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
           {lines.map((line, index) => {
             const lineId = `unchanged-${index + 1}`;
             const isHighlighted = highlightedLines.has(lineId);
@@ -237,7 +237,7 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
               <div 
                 key={index} 
                 className={cn(
-                  "flex",
+                  "flex whitespace-pre",
                   highlighterEnabled && "cursor-pointer select-none",
                   getHighlightClass(lineId, index),
                   isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
@@ -258,16 +258,19 @@ function UnchangedFileView({ diff, highlighterEnabled, highlightedLines, setHigh
                 onClick={() => handleLineClick(lineId)}
                 data-line-id={lineId}
               >
-                <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
+                {/* Fixed line numbers that don't scroll horizontally */}
+                <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
                   {index + 1}
-                </span>
-                <span className="px-4 py-0.5 whitespace-pre">
+                </div>
+                {/* Content that scrolls horizontally */}
+                <div className="px-4 py-0.5 flex-1">
                   {expandTabs(line, settings.tabSize)}
-                </span>
+                </div>
               </div>
             );
           })}
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
   );
@@ -380,12 +383,16 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
   };
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="font-mono text-sm w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
+    <ScrollArea className="h-full min-h-0">
+      <div className="font-mono text-sm" style={{ lineHeight: settings.lineHeight }}>
         {diff.hunks.map((hunk, hunkIndex) => (
           <div key={hunkIndex} className="border-b last:border-b-0">
-            <div className="bg-muted px-4 py-2 text-muted-foreground">
-              @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@
+            <div className="bg-muted px-4 py-2 text-muted-foreground flex">
+              {/* Fixed hunk header line numbers */}
+              <div className="w-20 flex-shrink-0 sticky left-0 bg-muted"></div>
+              <div className="flex-1">
+                @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@
+              </div>
             </div>
             {hunk.lines.map((line, lineIndex) => {
               const lineId = `inline-${hunkIndex}-${lineIndex}`;
@@ -396,7 +403,7 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
                 <div
                   key={lineIndex}
                   className={cn(
-                    "flex",
+                    "flex whitespace-pre",
                     line.type === 'add' && "bg-green-500/20 text-green-700 dark:text-green-400",
                     line.type === 'delete' && "bg-red-500/20 text-red-700 dark:text-red-400",
                     highlighterEnabled && "cursor-pointer select-none",
@@ -419,21 +426,26 @@ function InlineDiffView({ diff, highlighterEnabled, highlightedLines, setHighlig
                   onClick={() => handleLineClick(lineId)}
                   data-line-id={lineId}
                 >
-                  <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
-                    {line.oldLineNumber || line.newLineNumber || ''}
-                  </span>
-                  <span className="w-4 select-none px-2 py-0.5 text-muted-foreground">
-                    {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
-                  </span>
-                  <span className="px-2 py-0.5 whitespace-pre">
+                  {/* Fixed line numbers and symbols that don't scroll horizontally */}
+                  <div className="w-20 flex-shrink-0 bg-muted border-r flex sticky left-0">
+                    <span className="w-12 px-2 text-right text-muted-foreground py-0.5">
+                      {line.oldLineNumber || line.newLineNumber || ''}
+                    </span>
+                    <span className="w-4 px-2 text-muted-foreground py-0.5">
+                      {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
+                    </span>
+                  </div>
+                  {/* Content that scrolls horizontally */}
+                  <div className="px-2 py-0.5 flex-1">
                     {expandTabs(line.content, settings.tabSize)}
-                  </span>
+                  </div>
                 </div>
               );
             })}
           </div>
         ))}
       </div>
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 }
@@ -579,133 +591,28 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
 
   const handleScroll = (source: 'left' | 'right') => {
     return (event: React.UIEvent<HTMLDivElement>) => {
-      const scrollTop = event.currentTarget.scrollTop;
-      const scrollLeft = event.currentTarget.scrollLeft;
+      const viewport = event.currentTarget.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
+      if (!viewport) return;
+      
+      const scrollTop = viewport.scrollTop;
+      const scrollLeft = viewport.scrollLeft;
       
       if (source === 'left' && rightScrollRef.current) {
-        rightScrollRef.current.scrollTop = scrollTop;
-        rightScrollRef.current.scrollLeft = scrollLeft;
+        const rightViewport = rightScrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
+        if (rightViewport) {
+          rightViewport.scrollTop = scrollTop;
+          rightViewport.scrollLeft = scrollLeft;
+        }
       } else if (source === 'right' && leftScrollRef.current) {
-        leftScrollRef.current.scrollTop = scrollTop;
-        leftScrollRef.current.scrollLeft = scrollLeft;
+        const leftViewport = leftScrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
+        if (leftViewport) {
+          leftViewport.scrollTop = scrollTop;
+          leftViewport.scrollLeft = scrollLeft;
+        }
       }
     };
   };
 
-  const renderLine = (line: DiffLine | undefined, lineNumber: number | undefined, side: 'old' | 'new', index: number, allProcessedLines: Array<any>) => {
-    const lineId = line ? `${side}-${index}` : `empty-${side}-${index}`;
-    const isHighlighted = highlightedLines.has(lineId);
-    const isHovered = hoveredLine === lineId;
-
-    if (!line) {
-      return (
-        <div 
-          className={cn(
-            "flex",
-            highlighterEnabled && "cursor-pointer select-none",
-            getSideBySideHighlightClass(lineId, index, allProcessedLines),
-            isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
-          )}
-          onMouseDown={() => handleStart(lineId)}
-          onMouseEnter={() => handleMove(lineId)}
-          onMouseUp={handleEnd}
-          onMouseLeave={() => handleLineHover(null)}
-          onTouchStart={() => handleStart(lineId)}
-          onTouchMove={(e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            const touchLineId = element?.getAttribute('data-line-id');
-            if (touchLineId) handleMove(touchLineId);
-          }}
-          onTouchEnd={handleEnd}
-          onClick={() => handleLineClick(lineId)}
-          data-line-id={lineId}
-        >
-          <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
-            &nbsp;
-          </span>
-          <span className="px-4 py-0.5 bg-muted/30 block">&nbsp;</span>
-        </div>
-      );
-    }
-
-    const isAdd = line.type === 'add';
-    const isDelete = line.type === 'delete';
-    const showLine = (side === 'old' && !isAdd) || (side === 'new' && !isDelete);
-
-    if (!showLine) {
-      return (
-        <div 
-          className={cn(
-            "flex",
-            highlighterEnabled && "cursor-pointer select-none",
-            getSideBySideHighlightClass(lineId, index, allProcessedLines),
-            isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
-          )}
-          onMouseDown={() => handleStart(lineId)}
-          onMouseEnter={() => handleMove(lineId)}
-          onMouseUp={handleEnd}
-          onMouseLeave={() => handleLineHover(null)}
-          onTouchStart={() => handleStart(lineId)}
-          onTouchMove={(e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            const touchLineId = element?.getAttribute('data-line-id');
-            if (touchLineId) handleMove(touchLineId);
-          }}
-          onTouchEnd={handleEnd}
-          onClick={() => handleLineClick(lineId)}
-          data-line-id={lineId}
-        >
-          <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
-            &nbsp;
-          </span>
-          <span className="px-4 py-0.5 bg-muted/30 block">&nbsp;</span>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={cn(
-          "flex",
-          isAdd && "bg-green-500/20",
-          isDelete && "bg-red-500/20",
-          highlighterEnabled && "cursor-pointer select-none",
-          getSideBySideHighlightClass(lineId, index, processedLines),
-          isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
-        )}
-        onMouseDown={() => handleStart(lineId)}
-        onMouseEnter={() => handleMove(lineId)}
-        onMouseUp={handleEnd}
-        onMouseLeave={() => handleLineHover(null)}
-        onTouchStart={() => handleStart(lineId)}
-        onTouchMove={(e) => {
-          e.preventDefault();
-          const touch = e.touches[0];
-          const element = document.elementFromPoint(touch.clientX, touch.clientY);
-          const touchLineId = element?.getAttribute('data-line-id');
-          if (touchLineId) handleMove(touchLineId);
-        }}
-        onTouchEnd={handleEnd}
-        onClick={() => handleLineClick(lineId)}
-        data-line-id={lineId}
-      >
-        <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
-          {lineNumber}
-        </span>
-        <span className={cn(
-          "px-4 py-0.5 whitespace-pre block",
-          isAdd && "text-green-700 dark:text-green-400",
-          isDelete && "text-red-700 dark:text-red-400"
-        )}>
-          {expandTabs(line.content, settings.tabSize)}
-        </span>
-      </div>
-    );
-  };
 
   const processedLines: Array<{ old: DiffLine | undefined; new: DiffLine | undefined }> = [];
   
@@ -734,42 +641,271 @@ function SideBySideDiffView({ diff, highlighterEnabled, highlightedLines, setHig
   }
 
   return (
-    <div className="flex h-full font-mono text-sm">
-      <div className="flex-1 border-r overflow-hidden flex flex-col">
+    <div className="flex h-full font-mono text-sm min-h-0">
+      <div className="flex-1 border-r overflow-hidden flex flex-col min-h-0">
         <div className="bg-muted px-4 py-2 font-semibold shrink-0">
           {diff.previousPath || diff.path}
         </div>
-        <div 
+        <ScrollArea 
           ref={leftScrollRef}
-          className="flex-1 overflow-auto"
-          onScroll={handleScroll('left')}
+          className="flex-1 min-h-0"
+          onScrollCapture={handleScroll('left')}
         >
-          <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
-            {processedLines.map((linePair, index) => (
-              <div key={index}>
-                {renderLine(linePair.old, linePair.old?.oldLineNumber, 'old', index, processedLines)}
-              </div>
-            ))}
+          <div style={{ lineHeight: settings.lineHeight }}>
+            {processedLines.map((linePair, index) => {
+              const line = linePair.old;
+              const lineId = line ? `old-${index}` : `empty-old-${index}`;
+              const isHighlighted = highlightedLines.has(lineId);
+              const isHovered = hoveredLine === lineId;
+
+              if (!line) {
+                return (
+                  <div 
+                    key={index}
+                    className={cn(
+                      "flex whitespace-pre bg-muted/30",
+                      highlighterEnabled && "cursor-pointer select-none",
+                      getSideBySideHighlightClass(lineId, index, processedLines),
+                      isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                    )}
+                    onMouseDown={() => handleStart(lineId)}
+                    onMouseEnter={() => handleMove(lineId)}
+                    onMouseUp={handleEnd}
+                    onMouseLeave={() => handleLineHover(null)}
+                    onTouchStart={() => handleStart(lineId)}
+                    onTouchMove={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const touchLineId = element?.getAttribute('data-line-id');
+                      if (touchLineId) handleMove(touchLineId);
+                    }}
+                    onTouchEnd={handleEnd}
+                    onClick={() => handleLineClick(lineId)}
+                    data-line-id={lineId}
+                  >
+                    <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                      {/* Empty line number */}
+                    </div>
+                    <div className="px-4 py-0.5 flex-1">
+                      &nbsp;
+                    </div>
+                  </div>
+                );
+              }
+
+              const isAdd = line.type === 'add';
+              const isDelete = line.type === 'delete';
+              const showLine = !isAdd;
+
+              if (!showLine) {
+                return (
+                  <div 
+                    key={index}
+                    className={cn(
+                      "flex whitespace-pre bg-muted/30",
+                      highlighterEnabled && "cursor-pointer select-none",
+                      getSideBySideHighlightClass(lineId, index, processedLines),
+                      isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                    )}
+                    onMouseDown={() => handleStart(lineId)}
+                    onMouseEnter={() => handleMove(lineId)}
+                    onMouseUp={handleEnd}
+                    onMouseLeave={() => handleLineHover(null)}
+                    onTouchStart={() => handleStart(lineId)}
+                    onTouchMove={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const touchLineId = element?.getAttribute('data-line-id');
+                      if (touchLineId) handleMove(touchLineId);
+                    }}
+                    onTouchEnd={handleEnd}
+                    onClick={() => handleLineClick(lineId)}
+                    data-line-id={lineId}
+                  >
+                    <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                      {/* Empty line number */}
+                    </div>
+                    <div className="px-4 py-0.5 flex-1">
+                      &nbsp;
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex whitespace-pre",
+                    isAdd && "bg-green-500/20 text-green-700 dark:text-green-400",
+                    isDelete && "bg-red-500/20 text-red-700 dark:text-red-400",
+                    highlighterEnabled && "cursor-pointer select-none",
+                    getSideBySideHighlightClass(lineId, index, processedLines),
+                    isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                  )}
+                  onMouseDown={() => handleStart(lineId)}
+                  onMouseEnter={() => handleMove(lineId)}
+                  onMouseUp={handleEnd}
+                  onMouseLeave={() => handleLineHover(null)}
+                  onTouchStart={() => handleStart(lineId)}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const touchLineId = element?.getAttribute('data-line-id');
+                    if (touchLineId) handleMove(touchLineId);
+                  }}
+                  onTouchEnd={handleEnd}
+                  onClick={() => handleLineClick(lineId)}
+                  data-line-id={lineId}
+                >
+                  <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                    {line.oldLineNumber || ''}
+                  </div>
+                  <div className="px-4 py-0.5 flex-1">
+                    {expandTabs(line.content, settings.tabSize)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
-      <div className="flex-1 overflow-hidden flex flex-col">
+      
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <div className="bg-muted px-4 py-2 font-semibold shrink-0">
           {diff.path}
         </div>
-        <div 
+        <ScrollArea 
           ref={rightScrollRef}
-          className="flex-1 overflow-auto"
-          onScroll={handleScroll('right')}
+          className="flex-1 min-h-0"
+          onScrollCapture={handleScroll('right')}
         >
-          <div className="w-max min-w-full" style={{ lineHeight: settings.lineHeight }}>
-            {processedLines.map((linePair, index) => (
-              <div key={index}>
-                {renderLine(linePair.new, linePair.new?.newLineNumber, 'new', index, processedLines)}
-              </div>
-            ))}
+          <div style={{ lineHeight: settings.lineHeight }}>
+            {processedLines.map((linePair, index) => {
+              const line = linePair.new;
+              const lineId = line ? `new-${index}` : `empty-new-${index}`;
+              const isHighlighted = highlightedLines.has(lineId);
+              const isHovered = hoveredLine === lineId;
+
+              if (!line) {
+                return (
+                  <div 
+                    key={index}
+                    className={cn(
+                      "flex whitespace-pre bg-muted/30",
+                      highlighterEnabled && "cursor-pointer select-none",
+                      getSideBySideHighlightClass(lineId, index, processedLines),
+                      isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                    )}
+                    onMouseDown={() => handleStart(lineId)}
+                    onMouseEnter={() => handleMove(lineId)}
+                    onMouseUp={handleEnd}
+                    onMouseLeave={() => handleLineHover(null)}
+                    onTouchStart={() => handleStart(lineId)}
+                    onTouchMove={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const touchLineId = element?.getAttribute('data-line-id');
+                      if (touchLineId) handleMove(touchLineId);
+                    }}
+                    onTouchEnd={handleEnd}
+                    onClick={() => handleLineClick(lineId)}
+                    data-line-id={lineId}
+                  >
+                    <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                      {/* Empty line number */}
+                    </div>
+                    <div className="px-4 py-0.5 flex-1">
+                      &nbsp;
+                    </div>
+                  </div>
+                );
+              }
+
+              const isAdd = line.type === 'add';
+              const isDelete = line.type === 'delete';
+              const showLine = !isDelete;
+
+              if (!showLine) {
+                return (
+                  <div 
+                    key={index}
+                    className={cn(
+                      "flex whitespace-pre bg-muted/30",
+                      highlighterEnabled && "cursor-pointer select-none",
+                      getSideBySideHighlightClass(lineId, index, processedLines),
+                      isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                    )}
+                    onMouseDown={() => handleStart(lineId)}
+                    onMouseEnter={() => handleMove(lineId)}
+                    onMouseUp={handleEnd}
+                    onMouseLeave={() => handleLineHover(null)}
+                    onTouchStart={() => handleStart(lineId)}
+                    onTouchMove={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const touchLineId = element?.getAttribute('data-line-id');
+                      if (touchLineId) handleMove(touchLineId);
+                    }}
+                    onTouchEnd={handleEnd}
+                    onClick={() => handleLineClick(lineId)}
+                    data-line-id={lineId}
+                  >
+                    <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                      {/* Empty line number */}
+                    </div>
+                    <div className="px-4 py-0.5 flex-1">
+                      &nbsp;
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex whitespace-pre",
+                    isAdd && "bg-green-500/20 text-green-700 dark:text-green-400",
+                    isDelete && "bg-red-500/20 text-red-700 dark:text-red-400",
+                    highlighterEnabled && "cursor-pointer select-none",
+                    getSideBySideHighlightClass(lineId, index, processedLines),
+                    isHovered && highlighterEnabled && !isDragging && !isHighlighted && "bg-blue-100 dark:bg-blue-900/30"
+                  )}
+                  onMouseDown={() => handleStart(lineId)}
+                  onMouseEnter={() => handleMove(lineId)}
+                  onMouseUp={handleEnd}
+                  onMouseLeave={() => handleLineHover(null)}
+                  onTouchStart={() => handleStart(lineId)}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const touchLineId = element?.getAttribute('data-line-id');
+                    if (touchLineId) handleMove(touchLineId);
+                  }}
+                  onTouchEnd={handleEnd}
+                  onClick={() => handleLineClick(lineId)}
+                  data-line-id={lineId}
+                >
+                  <div className="w-12 flex-shrink-0 bg-muted border-r px-2 py-0.5 text-right text-muted-foreground sticky left-0">
+                    {line.newLineNumber || ''}
+                  </div>
+                  <div className="px-4 py-0.5 flex-1">
+                    {expandTabs(line.content, settings.tabSize)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </div>
   );
