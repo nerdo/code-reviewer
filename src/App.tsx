@@ -3,7 +3,7 @@ import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
 import { CommitSelector } from './components/CommitSelector';
 import { CommitFilter } from './components/CommitFilter';
-import { ReferenceSelector } from './components/ReferenceSelector';
+import { BranchCommitSelector } from './components/BranchCommitSelector';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
@@ -24,8 +24,11 @@ function App() {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [fromCommit, setFromCommit] = useState<string>('');
   const [toCommit, setToCommit] = useState<string>('');
-  const [fromType, setFromType] = useState<'branch' | 'tag' | 'commit'>('commit');
-  const [toType, setToType] = useState<'branch' | 'tag' | 'commit'>('commit');
+  const [fromType, setFromType] = useState<'branch' | 'tag'>('branch');
+  const [toType, setToType] = useState<'branch' | 'tag'>('branch');
+  const [fromBranch, setFromBranch] = useState<string>('HEAD');
+  const [toBranch, setToBranch] = useState<string>('HEAD');
+  const [branchCommits, setBranchCommits] = useState<Record<string, Commit[]>>({});
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [fileDiff, setFileDiff] = useState<FileDiff | null>(null);
@@ -184,14 +187,26 @@ function App() {
       setRepository(repoInfo);
       setCommits(commitList);
       
-      if (commitList.length >= 2) {
-        setFromCommit(commitList[1].hash);
-        setToCommit(commitList[0].hash);
-      }
+      // Set default selections to current branch
+      setFromCommit(repoInfo.currentBranch);
+      setToCommit(repoInfo.currentBranch);
+      setFromBranch(repoInfo.currentBranch);
+      setToBranch(repoInfo.currentBranch);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load repository');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBranchCommits = async (branch: string) => {
+    if (!repository || branchCommits[branch]) return;
+    
+    try {
+      const commits = await api.commits.list(repoPath, branch, 100);
+      setBranchCommits(prev => ({ ...prev, [branch]: commits }));
+    } catch (err) {
+      console.error(`Failed to load commits for branch ${branch}:`, err);
     }
   };
 
@@ -293,39 +308,42 @@ function App() {
         
         {repository && (
           <>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Branch: {repository.currentBranch}
-                </span>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3">
+                <BranchCommitSelector 
+                  label="From"
+                  branches={repository.branches}
+                  tags={repository.tags || []}
+                  commits={branchCommits[fromBranch] || commits}
+                  currentBranch={repository.currentBranch}
+                  value={fromCommit}
+                  onValueChange={(value, type, branch) => {
+                    setFromCommit(value);
+                    setFromType(type);
+                    if (branch) setFromBranch(branch);
+                  }}
+                  onBranchChange={(branch) => loadBranchCommits(branch)}
+                  defaultType={fromType}
+                />
+                
+                <BranchCommitSelector 
+                  label="To"
+                  branches={repository.branches}
+                  tags={repository.tags || []}
+                  commits={branchCommits[toBranch] || commits}
+                  currentBranch={repository.currentBranch}
+                  value={toCommit}
+                  onValueChange={(value, type, branch) => {
+                    setToCommit(value);
+                    setToType(type);
+                    if (branch) setToBranch(branch);
+                  }}
+                  onBranchChange={(branch) => loadBranchCommits(branch)}
+                  defaultType={toType}
+                />
               </div>
-              <ReferenceSelector 
-                label="From"
-                branches={repository.branches}
-                tags={repository.tags || []}
-                commits={filteredCommits}
-                value={fromCommit}
-                onValueChange={(value, type) => {
-                  setFromCommit(value);
-                  setFromType(type);
-                }}
-                defaultType={fromType}
-              />
               
-              <ReferenceSelector 
-                label="To"
-                branches={repository.branches}
-                tags={repository.tags || []}
-                commits={filteredCommits}
-                value={toCommit}
-                onValueChange={(value, type) => {
-                  setToCommit(value);
-                  setToType(type);
-                }}
-                defaultType={toType}
-              />
-              
-              <div className="ml-auto flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   variant={hasActiveFilters ? "default" : "outline"}
                   size="sm"
