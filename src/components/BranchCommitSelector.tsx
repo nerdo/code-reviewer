@@ -163,6 +163,36 @@ export function BranchCommitSelector({
                     );
                   }}
                 />
+                
+                {onDateFilterChange && (
+                  <>
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <Select 
+                      value={dateFilter} 
+                      onValueChange={(value: string) => onDateFilterChange(value as any)}
+                    >
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any time</SelectItem>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="last7">Last 7 days</SelectItem>
+                        <SelectItem value="last30">Last 30 days</SelectItem>
+                        <SelectItem value="last90">Last 3 months</SelectItem>
+                        <SelectItem value="custom">Custom date...</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {dateFilter === 'custom' && onCustomDateChange && (
+                      <Input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => onCustomDateChange(e.target.value)}
+                        className="w-[120px] h-8 text-xs"
+                      />
+                    )}
+                  </>
+                )}
               </>
             )}
           </div>
@@ -188,55 +218,23 @@ export function BranchCommitSelector({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex items-center gap-2">
+      <label className="text-sm text-muted-foreground">{label}:</label>
       <div className="flex items-center gap-2">
-        <label className="text-sm text-muted-foreground">{label}:</label>
-        <div className="flex items-center gap-2">
-          <Tabs value={referenceType} onValueChange={(v) => handleTypeChange(v as ReferenceType)}>
-            <TabsList className="h-8">
-              <TabsTrigger value="branch" className="text-xs px-2 py-1">
-                <GitBranch className="h-3 w-3 mr-1" />
-                Branch
-              </TabsTrigger>
-              <TabsTrigger value="tag" className="text-xs px-2 py-1">
-                <Tag className="h-3 w-3 mr-1" />
-                Tag
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {renderSelector()}
-        </div>
+        <Tabs value={referenceType} onValueChange={(v) => handleTypeChange(v as ReferenceType)}>
+          <TabsList className="h-8">
+            <TabsTrigger value="branch" className="text-xs px-2 py-1">
+              <GitBranch className="h-3 w-3 mr-1" />
+              Branch
+            </TabsTrigger>
+            <TabsTrigger value="tag" className="text-xs px-2 py-1">
+              <Tag className="h-3 w-3 mr-1" />
+              Tag
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {renderSelector()}
       </div>
-      
-      {onDateFilterChange && (
-        <div className="flex items-center gap-2 ml-12">
-          <Calendar className="h-3 w-3 text-muted-foreground" />
-          <Select 
-            value={dateFilter} 
-            onValueChange={(value: string) => onDateFilterChange(value as any)}
-          >
-            <SelectTrigger className="w-[160px] h-7 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any time</SelectItem>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="last7">Last 7 days</SelectItem>
-              <SelectItem value="last30">Last 30 days</SelectItem>
-              <SelectItem value="last90">Last 3 months</SelectItem>
-              <SelectItem value="custom">Custom date...</SelectItem>
-            </SelectContent>
-          </Select>
-          {dateFilter === 'custom' && onCustomDateChange && (
-            <Input
-              type="date"
-              value={customDate}
-              onChange={(e) => onCustomDateChange(e.target.value)}
-              className="w-[140px] h-7 text-xs"
-            />
-          )}
-        </div>
-      )}
     </div>
   );
 }
