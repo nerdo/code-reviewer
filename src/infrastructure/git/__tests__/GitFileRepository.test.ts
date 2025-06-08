@@ -82,7 +82,11 @@ describe('GitFileRepository', () => {
     });
 
     it('should handle binary files', async () => {
-      mockGit.show.mockResolvedValue('binary content');
+      mockGit.show.mockImplementation((args: string[]) => {
+        if (args[0] === 'abc123:image.png') return Promise.resolve('binary content old');
+        if (args[0] === 'def456:image.png') return Promise.resolve('binary content new');
+        return Promise.reject(new Error('File not found'));
+      });
       mockGit.raw.mockResolvedValue('-\t-\timage.png');
 
       const diff = await gitFileRepository.getFileDiff('/repo', 'abc123', 'def456', 'image.png');
@@ -102,6 +106,19 @@ describe('GitFileRepository', () => {
 
       expect(diff.oldContent).toBe('content');
       expect(diff.newContent).toBe('');
+    });
+
+    it('should handle unchanged files', async () => {
+      const sameContent = 'unchanged content';
+      mockGit.show.mockResolvedValue(sameContent);
+      mockGit.raw.mockResolvedValue('0\t0\tunchanged.ts');
+
+      const diff = await gitFileRepository.getFileDiff('/repo', 'abc123', 'def456', 'unchanged.ts');
+
+      expect(diff.oldContent).toBe(sameContent);
+      expect(diff.newContent).toBe(sameContent);
+      expect(diff.hunks).toHaveLength(0);
+      expect(diff.isBinary).toBe(false);
     });
   });
 

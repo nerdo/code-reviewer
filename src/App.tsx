@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FileBrowser } from './components/FileBrowser';
 import { DiffViewer } from './components/DiffViewer';
 import { Button } from './components/ui/button';
@@ -14,7 +14,7 @@ import { GitBranch, RefreshCw } from 'lucide-react';
 import { cn } from './lib/utils';
 
 function App() {
-  const [repoPath, setRepoPath] = useState<string>('.');
+  const [repoPath, setRepoPath] = useState<string>('./test-repo');
   const [repository, setRepository] = useState<Repository | null>(null);
   const [commits, setCommits] = useState<Commit[]>([]);
   const [fromCommit, setFromCommit] = useState<string>('');
@@ -202,18 +202,28 @@ function App() {
         
         <main className="flex-1">
           {fileDiff ? (
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')}>
-              <TabsList className="m-2">
-                <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
-                <TabsTrigger value="inline">Inline</TabsTrigger>
-              </TabsList>
-              <TabsContent value={viewMode} className="h-[calc(100%-56px)] m-0">
-                <DiffViewer diff={fileDiff} viewMode={viewMode} />
-              </TabsContent>
-            </Tabs>
+            (() => {
+              const hasNoChanges = fileDiff.hunks.length === 0 && fileDiff.oldContent === fileDiff.newContent;
+              
+              if (hasNoChanges) {
+                return <DiffViewer diff={fileDiff} viewMode={viewMode} />;
+              }
+              
+              return (
+                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'side-by-side' | 'inline')}>
+                  <TabsList className="m-2">
+                    <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
+                    <TabsTrigger value="inline">Inline</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value={viewMode} className="h-[calc(100%-56px)] m-0">
+                    <DiffViewer diff={fileDiff} viewMode={viewMode} />
+                  </TabsContent>
+                </Tabs>
+              );
+            })()
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
-              {selectedFile ? 'Loading diff...' : 'Select a file to view changes'}
+              {selectedFile ? 'Loading...' : 'Select a file to view changes'}
             </div>
           )}
         </main>

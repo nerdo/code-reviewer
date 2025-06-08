@@ -91,4 +91,22 @@ describe('DiffViewer', () => {
     expect(screen.getByText('old-test.ts')).toBeInTheDocument();
     expect(screen.getByText('new-test.ts')).toBeInTheDocument();
   });
+
+  it('should show unchanged file view for files with no changes', () => {
+    const unchangedDiff: FileDiff = {
+      path: 'unchanged.ts',
+      oldContent: 'const x = 1;\nconst y = 2;',
+      newContent: 'const x = 1;\nconst y = 2;',
+      hunks: [],
+      isBinary: false
+    };
+    
+    render(<DiffViewer diff={unchangedDiff} viewMode="side-by-side" />);
+    
+    expect(screen.getByText('No changes between commits')).toBeInTheDocument();
+    expect(screen.getByText('const x = 1;')).toBeInTheDocument();
+    expect(screen.getByText('const y = 2;')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument(); // Line number
+    expect(screen.getByText('2')).toBeInTheDocument(); // Line number
+  });
 });

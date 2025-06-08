@@ -23,6 +23,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/server/**/*",
+    "src/**/__tests__/**/*",
+    "src/**/*.test.*",
+    "node_modules",
+    "dist"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

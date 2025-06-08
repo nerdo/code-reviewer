@@ -1,5 +1,5 @@
 import express from 'express';
-import * as cors from 'cors';
+import cors from 'cors';
 import { repositoryRouter } from './routes/repository';
 import { commitRouter } from './routes/commit';
 import { fileRouter } from './routes/file';
@@ -15,7 +15,7 @@ app.use('/api/commits', commitRouter);
 app.use('/api/files', fileRouter);
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response) => {
   console.error('Server error:', err);
   res.status(500).json({ error: err.message || 'Internal server error' });
 });

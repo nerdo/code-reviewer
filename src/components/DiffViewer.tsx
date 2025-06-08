@@ -1,4 +1,3 @@
-import React from 'react';
 import { FileDiff, DiffLine } from '@/domain/entities/FileDiff';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
@@ -17,11 +16,44 @@ export function DiffViewer({ diff, viewMode }: DiffViewerProps) {
     );
   }
 
+  // Check if file has no changes (empty hunks and same content)
+  const hasNoChanges = diff.hunks.length === 0 && diff.oldContent === diff.newContent;
+
+  if (hasNoChanges) {
+    return <UnchangedFileView diff={diff} />;
+  }
+
   if (viewMode === 'inline') {
     return <InlineDiffView diff={diff} />;
   }
 
   return <SideBySideDiffView diff={diff} />;
+}
+
+function UnchangedFileView({ diff }: { diff: FileDiff }) {
+  const lines = diff.newContent.split('\n');
+
+  return (
+    <div className="h-full">
+      <div className="bg-muted px-4 py-2 text-center text-muted-foreground font-medium border-b">
+        No changes between commits
+      </div>
+      <ScrollArea className="h-[calc(100%-40px)]">
+        <div className="font-mono text-sm">
+          {lines.map((line, index) => (
+            <div key={index} className="flex">
+              <span className="w-12 select-none bg-muted px-2 py-0.5 text-right text-muted-foreground">
+                {index + 1}
+              </span>
+              <span className="flex-1 px-4 py-0.5">
+                {line}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
 }
 
 function InlineDiffView({ diff }: { diff: FileDiff }) {

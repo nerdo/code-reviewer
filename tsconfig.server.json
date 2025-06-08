@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
     "target": "ES2020",
@@ -12,8 +11,12 @@
     "resolveJsonModule": true,
     "declaration": false,
     "outDir": "./dist",
-    "rootDir": "./src/server"
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src/server/**/*"],
+  "include": ["src/server/**/*", "src/domain/**/*", "src/infrastructure/**/*"],
   "exclude": ["node_modules", "dist", "src/components", "src/hooks", "src/main.tsx", "src/App.tsx"]
 }

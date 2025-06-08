@@ -29,6 +29,7 @@ export class GitFileRepository implements IFileRepository {
     const diffSummary = await git.diffSummary([fromHash, toHash]);
     
     return diffSummary.files.map(file => {
+      const fileAny = file as any; // eslint-disable-line @typescript-eslint/no-explicit-any
       let changeType: FileChangeType;
       let previousPath: string | undefined;
 
@@ -36,9 +37,9 @@ export class GitFileRepository implements IFileRepository {
         const [oldPath, newPath] = file.file.split(' => ').map(p => p.trim());
         changeType = oldPath !== newPath ? FileChangeType.Renamed : FileChangeType.Modified;
         previousPath = oldPath;
-      } else if (file.insertions > 0 && file.deletions === 0 && file.changes === file.insertions) {
+      } else if (fileAny.insertions > 0 && fileAny.deletions === 0 && fileAny.changes === fileAny.insertions) {
         changeType = FileChangeType.Added;
-      } else if (file.deletions > 0 && file.insertions === 0 && file.changes === file.deletions) {
+      } else if (fileAny.deletions > 0 && fileAny.insertions === 0 && fileAny.changes === fileAny.deletions) {
         changeType = FileChangeType.Deleted;
       } else {
         changeType = FileChangeType.Modified;
@@ -48,8 +49,8 @@ export class GitFileRepository implements IFileRepository {
         path: file.file.includes('=>') ? file.file.split(' => ')[1].trim() : file.file,
         previousPath,
         changeType,
-        additions: file.insertions,
-        deletions: file.deletions
+        additions: fileAny.insertions || 0,
+        deletions: fileAny.deletions || 0
       };
     });
   }
@@ -64,6 +65,17 @@ export class GitFileRepository implements IFileRepository {
       this.getFileContent(repoPath, fromHash, filePath).catch(() => ''),
       this.getFileContent(repoPath, toHash, filePath).catch(() => '')
     ]);
+
+    // If both contents are the same, it's an unchanged file
+    if (oldContent === newContent && oldContent !== '') {
+      return {
+        path: filePath,
+        oldContent,
+        newContent,
+        hunks: [],
+        isBinary: false
+      };
+    }
 
     const isBinary = await this.isFileBinary(repoPath, toHash, filePath);
     const hunks = isBinary ? [] : this.diffService.generateDiff(oldContent, newContent);
