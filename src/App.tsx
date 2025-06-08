@@ -13,8 +13,10 @@ import { Commit } from './domain/entities/Commit';
 import { Repository } from './domain/entities/Repository';
 import { GitBranch, RefreshCw, Settings, Highlighter, Link2Off, Hash, Eye, Eraser } from 'lucide-react';
 import { cn } from './lib/utils';
+import { useSettings } from './components/settings-provider';
 
 function App() {
+  const { settings } = useSettings();
   const [repoPath, setRepoPath] = useState<string>('./test-repo');
   const [repository, setRepository] = useState<Repository | null>(null);
   const [commits, setCommits] = useState<Commit[]>([]);
@@ -23,13 +25,13 @@ function App() {
   const [fileTree, setFileTree] = useState<FileNode | null>(null);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [fileDiff, setFileDiff] = useState<FileDiff | null>(null);
-  const [viewMode, setViewMode] = useState<'side-by-side' | 'inline'>('side-by-side');
+  const [viewMode, setViewMode] = useState<'side-by-side' | 'inline'>(settings.defaultViewMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showSettings, setShowSettings] = useState(false);
-  const [highlighterEnabled, setHighlighterEnabled] = useState(false);
-  const [linkHighlights, setLinkHighlights] = useState(true);
-  const [linkMode, setLinkMode] = useState<'line-number' | 'visual-position'>('line-number');
+  const [highlighterEnabled, setHighlighterEnabled] = useState(settings.defaultHighlighterEnabled);
+  const [linkHighlights, setLinkHighlights] = useState(settings.defaultLinkHighlights);
+  const [linkMode, setLinkMode] = useState<'line-number' | 'visual-position'>(settings.defaultLinkMode);
   const clearHighlightsRef = useRef<(() => void) | null>(null);
 
   const cycleLinkMode = () => {
@@ -58,6 +60,7 @@ function App() {
     loadRepository();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const loadRepository = async () => {
     try {
@@ -116,6 +119,12 @@ function App() {
     if (!fromCommit || !toCommit) return;
     
     setSelectedFile(path);
+    
+    // Reset to default settings for new file selection
+    setViewMode(settings.defaultViewMode);
+    setHighlighterEnabled(settings.defaultHighlighterEnabled);
+    setLinkHighlights(settings.defaultLinkHighlights);
+    setLinkMode(settings.defaultLinkMode);
     
     try {
       setLoading(true);

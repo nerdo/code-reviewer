@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { ScrollArea } from "./ui/scroll-area"
@@ -112,7 +113,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
@@ -121,66 +122,145 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </DialogHeader>
 
         <div className="flex flex-1 gap-6 overflow-hidden">
-          <div className="w-1/3 space-y-6">
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Theme</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="ml-2 capitalize">{tempSettings.theme}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "light" }))}>
-                    Light
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "dark" }))}>
-                    Dark
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "system" }))}>
-                    System
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          <div className="w-1/2">
+            <Tabs defaultValue="appearance" className="h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                <TabsTrigger value="editor">Editor</TabsTrigger>
+                <TabsTrigger value="defaults">Defaults</TabsTrigger>
+              </TabsList>
+              
+              <div className="flex-1 overflow-auto mt-4">
+                <TabsContent value="appearance" className="space-y-6 mt-0">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Theme</Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                          <span className="ml-2 capitalize">{tempSettings.theme}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "light" }))}>
+                          Light
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "dark" }))}>
+                          Dark
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, theme: "system" }))}>
+                          System
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                Line Height: {tempSettings.lineHeight}
-              </Label>
-              <Slider
-                value={[tempSettings.lineHeight]}
-                onValueChange={([value]) => setTempSettings(prev => ({ ...prev, lineHeight: value }))}
-                max={2.5}
-                min={1.0}
-                step={0.1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Compact (1.0)</span>
-                <span>Spacious (2.5)</span>
-              </div>
-            </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Line Height: {tempSettings.lineHeight}
+                    </Label>
+                    <Slider
+                      value={[tempSettings.lineHeight]}
+                      onValueChange={([value]) => setTempSettings(prev => ({ ...prev, lineHeight: value }))}
+                      max={2.5}
+                      min={1.0}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Compact (1.0)</span>
+                      <span>Spacious (2.5)</span>
+                    </div>
+                  </div>
+                </TabsContent>
 
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                Tab Size: {tempSettings.tabSize} spaces
-              </Label>
-              <Slider
-                value={[tempSettings.tabSize]}
-                onValueChange={([value]) => setTempSettings(prev => ({ ...prev, tabSize: value }))}
-                max={8}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1 space</span>
-                <span>8 spaces</span>
+                <TabsContent value="editor" className="space-y-6 mt-0">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Tab Size: {tempSettings.tabSize} spaces
+                    </Label>
+                    <Slider
+                      value={[tempSettings.tabSize]}
+                      onValueChange={([value]) => setTempSettings(prev => ({ ...prev, tabSize: value }))}
+                      max={8}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>1 space</span>
+                      <span>8 spaces</span>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="defaults" className="space-y-6 mt-0">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Default View Mode</Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <span className="capitalize">{tempSettings.defaultViewMode === 'side-by-side' ? 'Side by Side' : 'Inline'}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, defaultViewMode: "side-by-side" }))}>
+                          Side by Side
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, defaultViewMode: "inline" }))}>
+                          Inline
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Highlighter Defaults</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Enable by default</span>
+                        <Button
+                          variant={tempSettings.defaultHighlighterEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTempSettings(prev => ({ ...prev, defaultHighlighterEnabled: !prev.defaultHighlighterEnabled }))}
+                        >
+                          {tempSettings.defaultHighlighterEnabled ? "On" : "Off"}
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Link highlights by default</span>
+                        <Button
+                          variant={tempSettings.defaultLinkHighlights ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setTempSettings(prev => ({ ...prev, defaultLinkHighlights: !prev.defaultLinkHighlights }))}
+                        >
+                          {tempSettings.defaultLinkHighlights ? "On" : "Off"}
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm">Default link mode</Label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              <span>{tempSettings.defaultLinkMode === 'line-number' ? 'Link Line #' : 'Link Visual'}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, defaultLinkMode: "line-number" }))}>
+                              Link Line #
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTempSettings(prev => ({ ...prev, defaultLinkMode: "visual-position" }))}>
+                              Link Visual
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
               </div>
-            </div>
+            </Tabs>
           </div>
 
           <div className="flex-1 space-y-3">

@@ -6,6 +6,10 @@ export type Settings = {
   theme: Theme
   lineHeight: number
   tabSize: number
+  defaultViewMode: 'side-by-side' | 'inline'
+  defaultHighlighterEnabled: boolean
+  defaultLinkHighlights: boolean
+  defaultLinkMode: 'line-number' | 'visual-position'
 }
 
 type SettingsContextType = {
@@ -16,7 +20,11 @@ type SettingsContextType = {
 const defaultSettings: Settings = {
   theme: "system",
   lineHeight: 1.5,
-  tabSize: 4
+  tabSize: 4,
+  defaultViewMode: 'side-by-side',
+  defaultHighlighterEnabled: false,
+  defaultLinkHighlights: true,
+  defaultLinkMode: 'line-number'
 }
 
 const SettingsContext = createContext<SettingsContextType>({
